@@ -1,6 +1,6 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export type PickCallback = (mesh: THREE.Mesh | null) => void;
 
@@ -23,7 +23,10 @@ export class SceneManager {
     this.camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 10_000);
     this.camera.position.set(20, 20, 20);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance",
+    });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(w, h, false);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -34,7 +37,7 @@ export class SceneManager {
     // OrbitControls dispatches 'change' from inside update(), including the
     // update() it calls synchronously from its own wheel handler. Listening
     // here is what makes wheel-driven zoom visible under on-demand rendering.
-    this.controls.addEventListener('change', this.invalidate);
+    this.controls.addEventListener("change", this.invalidate);
 
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0x222233, 0.9));
     const dir = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -44,7 +47,10 @@ export class SceneManager {
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
 
-    this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown);
+    this.renderer.domElement.addEventListener(
+      "pointerdown",
+      this.onPointerDown,
+    );
     this.renderer.setAnimationLoop(this.tick);
   }
 
@@ -95,7 +101,9 @@ export class SceneManager {
     const center = box.getCenter(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const dist = maxDim * 1.8;
-    this.camera.position.copy(center).add(new THREE.Vector3(dist, dist * 0.8, dist));
+    this.camera.position
+      .copy(center)
+      .add(new THREE.Vector3(dist, dist * 0.8, dist));
     this.camera.near = Math.max(0.01, maxDim / 1000);
     this.camera.far = maxDim * 20;
     this.camera.updateProjectionMatrix();
@@ -130,20 +138,28 @@ export class SceneManager {
     this.pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
     this.raycaster.setFromCamera(this.pointer, this.camera);
     const hits = this.raycaster.intersectObjects(this.scene.children, true);
-    const mesh = hits.find((h) => (h.object as THREE.Mesh).isMesh)?.object as THREE.Mesh | undefined;
+    const mesh = hits.find((h) => (h.object as THREE.Mesh).isMesh)?.object as
+      | THREE.Mesh
+      | undefined;
     this.pickCallback(mesh ?? null);
   };
 
   dispose() {
     this.disposed = true;
     this.renderer.setAnimationLoop(null);
-    this.controls.removeEventListener('change', this.invalidate);
-    this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown);
+    this.controls.removeEventListener("change", this.invalidate);
+    this.renderer.domElement.removeEventListener(
+      "pointerdown",
+      this.onPointerDown,
+    );
     this.resizeObserver?.disconnect();
     this.scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       mesh.geometry?.dispose?.();
-      const mat = mesh.material as THREE.Material | THREE.Material[] | undefined;
+      const mat = mesh.material as
+        | THREE.Material
+        | THREE.Material[]
+        | undefined;
       if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
       else mat?.dispose?.();
     });
