@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Viewer } from "./viewer/Viewer";
 import { PropertyPanel } from "./viewer/PropertyPanel";
+import { PerformanceOverlay } from "./viewer/PerformanceOverlay";
 import { useViewerStore } from "./store";
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
         )}
       </div>
 
+      <PerformanceOverlay />
       <PropertyPanel />
     </div>
   );

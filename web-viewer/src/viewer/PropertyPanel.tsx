@@ -53,10 +53,10 @@ function Row({ label, value }: { label: string; value: unknown }) {
 
 const panelStyle: React.CSSProperties = {
   position: "absolute",
-  top: 12,
+  top: 56,
   right: 12,
   width: 320,
-  maxHeight: "calc(100vh - 24px)",
+  maxHeight: "calc(100vh - 68px)",
   padding: 14,
   background: "rgba(30, 31, 34, 0.92)",
   border: "1px solid #333",
