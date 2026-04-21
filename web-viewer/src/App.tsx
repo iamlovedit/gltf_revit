@@ -1,13 +1,22 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Viewer } from "./viewer/Viewer";
 import { PropertyPanel } from "./viewer/PropertyPanel";
 import { PerformanceOverlay } from "./viewer/PerformanceOverlay";
+import { BottomToolbar } from "./viewer/BottomToolbar";
+import { SceneManager } from "./viewer/SceneManager";
 import { useViewerStore } from "./store";
 
 export default function App() {
   const [url, setUrl] = useState<string | null>(null);
+  const [sceneManager, setSceneManager] = useState<SceneManager | null>(null);
   const loading = useViewerStore((s) => s.loading);
   const progress = useViewerStore((s) => s.progress);
+
+  // Stable identity so Viewer's effect doesn't tear down the renderer on
+  // every App render.
+  const onReady = useCallback((mgr: SceneManager | null) => {
+    setSceneManager(mgr);
+  }, []);
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -19,7 +28,7 @@ export default function App() {
 
   return (
     <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
-      <Viewer url={url} />
+      <Viewer url={url} onReady={onReady} />
 
       <div style={toolbar}>
         <label style={button}>
@@ -40,6 +49,7 @@ export default function App() {
 
       <PerformanceOverlay />
       <PropertyPanel />
+      <BottomToolbar sceneManager={sceneManager} />
     </div>
   );
 }

@@ -6,26 +6,34 @@ import { useViewerStore, ElementProps } from "../store";
 
 interface Props {
   url: string | null;
+  onReady?: (mgr: SceneManager | null) => void;
 }
 
-export function Viewer({ url }: Props) {
+export function Viewer({ url, onReady }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const managerRef = useRef<SceneManager | null>(null);
   const setProgress = useViewerStore((s) => s.setProgress);
   const setLoading = useViewerStore((s) => s.setLoading);
   const setSelected = useViewerStore((s) => s.setSelected);
+  const setHiddenCount = useViewerStore((s) => s.setHiddenCount);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const mgr = new SceneManager(containerRef.current);
     mgr.onPick((mesh) => setSelected(mesh ? resolveExtras(mesh) : null));
     mgr.onStats(useViewerStore.getState().setStats);
+    mgr.onHiddenChange((n) => setHiddenCount(n));
     managerRef.current = mgr;
+    onReady?.(mgr);
     return () => {
+      onReady?.(null);
       mgr.dispose();
       managerRef.current = null;
     };
-  }, [setSelected]);
+    // onReady intentionally excluded: a fresh callback identity each render
+    // would tear down the WebGL context. App passes a stable ref setter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setSelected, setHiddenCount]);
 
   useEffect(() => {
     if (!url || !managerRef.current) return;
