@@ -31,6 +31,8 @@ const STATS_EMIT_INTERVAL_MS = 250;
 const INITIAL_CAM_POS = new THREE.Vector3(20, 20, 20);
 const INITIAL_TARGET = new THREE.Vector3(0, 0, 0);
 
+const preventDefault = (ev: Event) => ev.preventDefault();
+
 const STANDARD_VIEW_DIRS: Record<StandardView, THREE.Vector3> = {
   front: new THREE.Vector3(0, 0, 1),
   back: new THREE.Vector3(0, 0, -1),
@@ -109,6 +111,11 @@ export class SceneManager {
       "pointerdown",
       this.onPointerDown,
     );
+    // Middle-button double-click resets the view. We listen on mousedown
+    // because the native 'dblclick' event only fires for the primary button.
+    this.renderer.domElement.addEventListener("mousedown", this.onMouseDown);
+    // Prevent the browser's middle-button auto-scroll UI from appearing.
+    this.renderer.domElement.addEventListener("auxclick", preventDefault);
     this.renderer.setAnimationLoop(this.tick);
   }
 
@@ -321,6 +328,13 @@ export class SceneManager {
   ): OrbitControls {
     const controls = new OrbitControls(camera, this.renderer.domElement);
     controls.enableDamping = true;
+    // Middle mouse → pan (instead of the default dolly). Wheel still zooms,
+    // and right-drag keeps panning as a fallback.
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.PAN,
+      RIGHT: THREE.MOUSE.PAN,
+    };
     // OrbitControls dispatches 'change' from inside update(), including the
     // update() it calls synchronously from its own wheel handler. Listening
     // here is what makes wheel-driven zoom visible under on-demand rendering.
@@ -364,8 +378,12 @@ export class SceneManager {
     this.needsRender = false;
 
     this.frameSamples.push(dt);
-    if (this.frameSamples.length > FRAME_SAMPLE_WINDOW) this.frameSamples.shift();
-    if (this.statsCallback && t0 - this.lastStatsEmitAt > STATS_EMIT_INTERVAL_MS) {
+    if (this.frameSamples.length > FRAME_SAMPLE_WINDOW)
+      this.frameSamples.shift();
+    if (
+      this.statsCallback &&
+      t0 - this.lastStatsEmitAt > STATS_EMIT_INTERVAL_MS
+    ) {
       const sum = this.frameSamples.reduce((a, b) => a + b, 0);
       const avg = sum / this.frameSamples.length;
       this.statsCallback({
@@ -398,6 +416,9 @@ export class SceneManager {
   };
 
   private onPointerDown = (ev: PointerEvent) => {
+    // Only the primary (left) button selects / drags gizmos. Middle and right
+    // buttons are reserved for camera navigation via OrbitControls.
+    if (ev.button !== 0) return;
     // Let the section box handle take precedence when a face handle is hit;
     // if so, skip normal picking for this event.
     if (this.sectionBox.tryStartDrag(ev)) return;
@@ -412,6 +433,21 @@ export class SceneManager {
       | undefined;
     this.setHighlighted(mesh ?? null);
     this.pickCallback(mesh ?? null);
+  };
+
+  private lastMiddleDownAt = 0;
+  private onMouseDown = (ev: MouseEvent) => {
+    if (ev.button !== 1) return;
+    // Stops Windows/Linux browsers from showing the middle-click auto-scroll
+    // cursor when the user starts a pan drag.
+    ev.preventDefault();
+    const now = performance.now();
+    if (now - this.lastMiddleDownAt < 400) {
+      this.lastMiddleDownAt = 0;
+      this.resetView();
+    } else {
+      this.lastMiddleDownAt = now;
+    }
   };
 
   // Swap the picked mesh's material for a tinted clone so the selection is
@@ -471,6 +507,8 @@ export class SceneManager {
       "pointerdown",
       this.onPointerDown,
     );
+    this.renderer.domElement.removeEventListener("mousedown", this.onMouseDown);
+    this.renderer.domElement.removeEventListener("auxclick", preventDefault);
     this.resizeObserver?.disconnect();
     this.scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
