@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 export interface ElementProps {
   elementId?: number;
@@ -23,5 +23,5 @@ export const useViewerStore = create<ViewerState>((set) => ({
   selected: null,
   setProgress: (progress) => set({ progress }),
   setLoading: (loading) => set({ loading }),
-  setSelected: (selected) => set({ selected })
+  setSelected: (selected) => set({ selected }),
 }));

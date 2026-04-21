@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { SceneManager } from './SceneManager';
-import { loadGlb } from './AsyncGltfLoader';
-import { useViewerStore, ElementProps } from '../store';
+import { useEffect, useRef } from "react";
+import * as THREE from "three";
+import { SceneManager } from "./SceneManager";
+import { loadGlb } from "./AsyncGltfLoader";
+import { useViewerStore, ElementProps } from "../store";
 
 interface Props {
   url: string | null;
@@ -38,7 +38,7 @@ export function Viewer({ url }: Props) {
       try {
         const gltf = await loadGlb(url, {
           signal: ctl.signal,
-          onProgress: (p) => setProgress(p)
+          onProgress: (p) => setProgress(p),
         });
         if (cancelled) return;
         await mgr.addGltfProgressively(gltf);
@@ -55,7 +55,7 @@ export function Viewer({ url }: Props) {
     };
   }, [url, setLoading, setProgress]);
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
+  return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
 }
 
 // Walks up the scene graph looking for the first node with glTF extras
@@ -70,7 +70,7 @@ function resolveExtras(mesh: THREE.Object3D): ElementProps | null {
         category: data.category,
         family: data.family,
         type: data.type,
-        parameters: data.parameters
+        parameters: data.parameters,
       };
     }
     obj = obj.parent;
