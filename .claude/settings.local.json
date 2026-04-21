@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(pnpm typecheck *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(xargs basename *)",
+      "Bash(npm run *)"
     ]
   }
 }

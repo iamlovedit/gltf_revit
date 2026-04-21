@@ -19,6 +19,7 @@ export function Viewer({ url }: Props) {
     if (!containerRef.current) return;
     const mgr = new SceneManager(containerRef.current);
     mgr.onPick((mesh) => setSelected(mesh ? resolveExtras(mesh) : null));
+    mgr.onStats(useViewerStore.getState().setStats);
     managerRef.current = mgr;
     return () => {
       mgr.dispose();

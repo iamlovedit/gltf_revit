@@ -4,6 +4,18 @@ import { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export type PickCallback = (mesh: THREE.Mesh | null) => void;
 
+export interface RenderStats {
+  fps: number;
+  frameTimeMs: number;
+  triangles: number;
+  drawCalls: number;
+}
+
+export type StatsCallback = (stats: RenderStats) => void;
+
+const FRAME_SAMPLE_WINDOW = 30;
+const STATS_EMIT_INTERVAL_MS = 250;
+
 export class SceneManager {
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
@@ -14,7 +26,13 @@ export class SceneManager {
   private disposed = false;
   private resizeObserver: ResizeObserver | null = null;
   private pickCallback: PickCallback | null = null;
+  private statsCallback: StatsCallback | null = null;
+  private readonly frameSamples: number[] = [];
+  private lastStatsEmitAt = 0;
   private needsRender = true;
+  private highlighted: THREE.Mesh | null = null;
+  private originalMaterial: THREE.Material | THREE.Material[] | null = null;
+  private readonly highlightColor = new THREE.Color(0xffa500);
 
   constructor(private readonly container: HTMLElement) {
     this.scene.background = new THREE.Color(0x1e1f22);
@@ -56,6 +74,10 @@ export class SceneManager {
 
   onPick(cb: PickCallback) {
     this.pickCallback = cb;
+  }
+
+  onStats(cb: StatsCallback) {
+    this.statsCallback = cb;
   }
 
   invalidate = () => {
@@ -118,8 +140,24 @@ export class SceneManager {
     // the flag here.
     this.controls.update();
     if (!this.needsRender) return;
+    const t0 = performance.now();
     this.renderer.render(this.scene, this.camera);
+    const dt = performance.now() - t0;
     this.needsRender = false;
+
+    this.frameSamples.push(dt);
+    if (this.frameSamples.length > FRAME_SAMPLE_WINDOW) this.frameSamples.shift();
+    if (this.statsCallback && t0 - this.lastStatsEmitAt > STATS_EMIT_INTERVAL_MS) {
+      const sum = this.frameSamples.reduce((a, b) => a + b, 0);
+      const avg = sum / this.frameSamples.length;
+      this.statsCallback({
+        fps: avg > 0 ? 1000 / avg : 0,
+        frameTimeMs: avg,
+        triangles: this.renderer.info.render.triangles,
+        drawCalls: this.renderer.info.render.calls,
+      });
+      this.lastStatsEmitAt = t0;
+    }
   };
 
   private resize = () => {
@@ -141,11 +179,59 @@ export class SceneManager {
     const mesh = hits.find((h) => (h.object as THREE.Mesh).isMesh)?.object as
       | THREE.Mesh
       | undefined;
+    this.setHighlighted(mesh ?? null);
     this.pickCallback(mesh ?? null);
   };
 
+  // Swap the picked mesh's material for a tinted clone so the selection is
+  // visible. The clone is scoped to this one mesh, so shared materials on
+  // other meshes are unaffected. Restoring pops the original back.
+  private setHighlighted(mesh: THREE.Mesh | null) {
+    if (this.highlighted === mesh) return;
+    if (this.highlighted && this.originalMaterial) {
+      const current = this.highlighted.material as
+        | THREE.Material
+        | THREE.Material[];
+      if (Array.isArray(current)) current.forEach((m) => m.dispose());
+      else current.dispose();
+      this.highlighted.material = this.originalMaterial;
+    }
+    this.highlighted = null;
+    this.originalMaterial = null;
+
+    if (mesh) {
+      this.originalMaterial = mesh.material as
+        | THREE.Material
+        | THREE.Material[];
+      mesh.material = Array.isArray(this.originalMaterial)
+        ? this.originalMaterial.map((m) => this.tintClone(m))
+        : this.tintClone(this.originalMaterial);
+      this.highlighted = mesh;
+    }
+    this.invalidate();
+  }
+
+  private tintClone(material: THREE.Material): THREE.Material {
+    const clone = material.clone();
+    const withColor = clone as THREE.Material & {
+      color?: THREE.Color;
+      emissive?: THREE.Color;
+      emissiveIntensity?: number;
+    };
+    if (withColor.color) withColor.color.copy(this.highlightColor);
+    if (withColor.emissive) {
+      withColor.emissive.copy(this.highlightColor);
+      if (withColor.emissiveIntensity !== undefined) {
+        withColor.emissiveIntensity = 0.4;
+      }
+    }
+    return clone;
+  }
+
   dispose() {
     this.disposed = true;
+    this.statsCallback = null;
+    this.setHighlighted(null);
     this.renderer.setAnimationLoop(null);
     this.controls.removeEventListener("change", this.invalidate);
     this.renderer.domElement.removeEventListener(
