@@ -31,6 +31,10 @@ export class SceneManager {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
+    // OrbitControls dispatches 'change' from inside update(), including the
+    // update() it calls synchronously from its own wheel handler. Listening
+    // here is what makes wheel-driven zoom visible under on-demand rendering.
+    this.controls.addEventListener('change', this.invalidate);
 
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0x222233, 0.9));
     const dir = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -48,9 +52,9 @@ export class SceneManager {
     this.pickCallback = cb;
   }
 
-  invalidate() {
+  invalidate = () => {
     this.needsRender = true;
-  }
+  };
 
   // Adds the gltf to the scene but keeps meshes hidden and reveals them in
   // batches. Between batches we await renderer.compileAsync so WebGL programs
@@ -101,10 +105,10 @@ export class SceneManager {
 
   private tick = () => {
     if (this.disposed) return;
-    // OrbitControls.update() returns true while damping inertia is still
-    // moving the camera, which keeps frames flowing after pointer release
-    // without forcing a render when the scene is idle.
-    if (this.controls.update()) this.needsRender = true;
+    // update() drives damping and fires 'change' when the camera actually
+    // moves; the listener flips needsRender for us, so we only need to check
+    // the flag here.
+    this.controls.update();
     if (!this.needsRender) return;
     this.renderer.render(this.scene, this.camera);
     this.needsRender = false;
@@ -133,6 +137,7 @@ export class SceneManager {
   dispose() {
     this.disposed = true;
     this.renderer.setAnimationLoop(null);
+    this.controls.removeEventListener('change', this.invalidate);
     this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown);
     this.resizeObserver?.disconnect();
     this.scene.traverse((obj) => {
