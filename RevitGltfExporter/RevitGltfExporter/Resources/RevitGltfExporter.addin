@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>RevitGltfExporter</Name>
+    <Assembly>D:\Codes\DotNet\BIM\gltf-viewer\output\RevitGltfExporter.dll</Assembly>
+    <AddInId>4f8e3a1b-0a6d-4d1a-9a5e-7f2a1c9d3e4f</AddInId>
+    <FullClassName>RevitGltfExporter.Application</FullClassName>
+    <VendorId>LOCAL</VendorId>
+    <VendorDescription>Internal</VendorDescription>
+  </AddIn>
+</RevitAddIns>
