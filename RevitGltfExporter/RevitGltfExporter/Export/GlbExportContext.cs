@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Autodesk.Revit.DB;
-using RevitGltfExporter.UI;
+using GltfExporter.Shared;
 
 namespace RevitGltfExporter.Export
 {

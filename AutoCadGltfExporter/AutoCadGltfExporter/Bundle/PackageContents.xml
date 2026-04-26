@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Autodesk Application Plugin Autoloader manifest.
+  Drop the AutoCadGltfExporter.bundle folder into one of:
+    %AppData%\Autodesk\ApplicationPlugins\
+    %ProgramData%\Autodesk\ApplicationPlugins\
+    %ProgramFiles%\Autodesk\ApplicationPlugins\
+  AutoCAD will pick it up at startup.
+
+  Series codes:
+    R23.1 = AutoCAD 2020   R23.2 = AutoCAD 2021
+    R24.0 = AutoCAD 2022   R24.1 = AutoCAD 2023
+    R24.2 = AutoCAD 2024
+-->
+<ApplicationPackage SchemaVersion="1.0"
+                    AutodeskProduct="AutoCAD"
+                    Name="AutoCadGltfExporter"
+                    Description="Export DWG drawings to glb for the web viewer."
+                    AppVersion="1.0.0"
+                    ProductCode="{8b1d2c3a-4e5f-46a7-9b8c-1d2e3f4a5b6c}"
+                    HelpFile=""
+                    Author="Internal"
+                    SupportedLocales="Enu">
+  <CompanyDetails Name="Internal" Email="" />
+  <Components Description="AutoCAD plug-in">
+    <RuntimeRequirements OS="Win64"
+                         Platform="AutoCAD*"
+                         SeriesMin="R23.1"
+                         SeriesMax="R24.3"
+                         SupportPath="./Contents" />
+    <ComponentEntry AppName="AutoCadGltfExporter"
+                    AppDescription="Export DWG to glb"
+                    ModuleName="./Contents/AutoCadGltfExporter.dll"
+                    LoadOnAutoCADStartup="True"
+                    LoadReasons="LoadOnAutoCADStartup,LoadOnCommandInvocation">
+      <Commands GroupName="GLB_TOOLS">
+        <Command Global="EXPORTGLB" Local="EXPORTGLB" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+</ApplicationPackage>

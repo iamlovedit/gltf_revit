@@ -13,13 +13,16 @@ export function PropertyPanel() {
     );
   }
 
-  const { elementId, category, family, type, parameters } = selected;
+  const { elementId, category, family, type, layer, parameters } = selected;
   return (
     <div style={panelStyle}>
-      <h3 style={{ margin: "0 0 12px" }}>{category ?? "Element"}</h3>
+      <h3 style={{ margin: "0 0 12px" }}>
+        {category ?? type ?? (layer ? `Layer: ${layer}` : "Element")}
+      </h3>
       <Row label="Element ID" value={elementId} />
       <Row label="Family" value={family} />
       <Row label="Type" value={type} />
+      <Row label="Layer" value={layer} />
       {parameters && Object.keys(parameters).length > 0 && (
         <>
           <h4 style={{ margin: "16px 0 8px", color: "#9cf" }}>Parameters</h4>

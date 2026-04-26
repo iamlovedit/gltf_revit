@@ -1,4 +1,4 @@
-namespace RevitGltfExporter.UI
+namespace GltfExporter.Shared
 {
     public class ExportOptions
     {

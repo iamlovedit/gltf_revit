@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Viewer } from "./viewer/Viewer";
 import { PropertyPanel } from "./viewer/PropertyPanel";
+import { LayerPanel } from "./viewer/LayerPanel";
 import { PerformanceOverlay } from "./viewer/PerformanceOverlay";
 import { BottomToolbar } from "./viewer/BottomToolbar";
 import { SceneManager } from "./viewer/SceneManager";
@@ -49,6 +50,7 @@ export default function App() {
 
       <PerformanceOverlay />
       <PropertyPanel />
+      <LayerPanel sceneManager={sceneManager} />
       <BottomToolbar sceneManager={sceneManager} />
     </div>
   );

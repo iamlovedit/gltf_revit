@@ -185,12 +185,16 @@ export class SectionBoxController {
 
   private assignPlanesTo(root: THREE.Object3D) {
     root.traverse((obj) => {
-      const mesh = obj as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      // Skip our own gizmo handle meshes (the boxLine is a LineSegments, not
-      // a Mesh, so it's already filtered by the isMesh check above).
-      if (this.handleByMesh.has(mesh)) return;
-      const mat = mesh.material as THREE.Material | THREE.Material[];
+      const mesh = obj as THREE.Mesh & THREE.LineSegments;
+      const drawable =
+        mesh.isMesh || mesh.isLineSegments || (obj as THREE.Line).isLine;
+      if (!drawable) return;
+      // Skip our own gizmo: handle meshes by lookup, the boxLine by reference.
+      if (this.handleByMesh.has(mesh as THREE.Mesh)) return;
+      if (obj === this.boxLine) return;
+      const mat = (mesh as THREE.Mesh).material as
+        | THREE.Material
+        | THREE.Material[];
       if (Array.isArray(mat)) {
         for (const m of mat) m.clippingPlanes = this.planes;
       } else if (mat) {

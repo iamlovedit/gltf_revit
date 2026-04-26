@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
@@ -56,5 +57,26 @@ export async function loadGlb(
     offset += c.byteLength;
   }
 
-  return await getLoader().parseAsync(buffer.buffer, "");
+  const gltf = await getLoader().parseAsync(buffer.buffer, "");
+
+  // GLTFLoader puts extras on the parent node only. For DWG-sourced glbs the
+  // Mesh / LineSegments live as children of a layer node, so the layer name
+  // would be invisible to picking and to per-object filters. Walk the scene
+  // and propagate the layer/layerColor down to drawable descendants.
+  gltf.scene.traverse((obj) => {
+    const data = obj.userData as Record<string, unknown>;
+    if (!data || data.layer) return;
+    let p: THREE.Object3D | null = obj.parent;
+    while (p) {
+      const pd = p.userData as Record<string, unknown> | undefined;
+      if (pd?.layer) {
+        data.layer = pd.layer;
+        if (pd.layerColor) data.layerColor = pd.layerColor;
+        break;
+      }
+      p = p.parent;
+    }
+  });
+
+  return gltf;
 }

@@ -51,7 +51,15 @@ export class SceneManager {
   private perspCamera: THREE.PerspectiveCamera;
   private cameraMode: CameraMode = "perspective";
   private controls: OrbitControls;
-  private readonly raycaster = new THREE.Raycaster();
+  private readonly raycaster = (() => {
+    const r = new THREE.Raycaster();
+    // Lines have zero thickness in screen space; without a threshold the
+    // raycaster only hits when the pointer crosses the geometric line
+    // exactly, which is essentially never. The threshold is in world units;
+    // 0.05 m matches the typical drawing scale of DWG-sourced glbs.
+    r.params.Line = { ...(r.params.Line ?? {}), threshold: 0.05 };
+    return r;
+  })();
   private readonly pointer = new THREE.Vector2();
   private disposed = false;
   private resizeObserver: ResizeObserver | null = null;
@@ -139,10 +147,14 @@ export class SceneManager {
   // batches. Between batches we await renderer.compileAsync so WebGL programs
   // are compiled ahead of the first render of each batch, spreading the
   // shader-compile cost across short tasks instead of one multi-second stall.
+  // Includes both .isMesh (triangles) and .isLineSegments (DWG-sourced lines).
   async addGltfProgressively(gltf: GLTF) {
-    const meshes: THREE.Mesh[] = [];
+    const meshes: THREE.Object3D[] = [];
     gltf.scene.traverse((o) => {
-      if ((o as THREE.Mesh).isMesh) meshes.push(o as THREE.Mesh);
+      const m = o as THREE.Mesh & THREE.LineSegments;
+      if (m.isMesh || m.isLineSegments || (o as THREE.Line).isLine) {
+        meshes.push(o);
+      }
     });
 
     const prevVisibility = meshes.map((m) => m.visible);
@@ -195,6 +207,7 @@ export class SceneManager {
   private applyWireframe(root: THREE.Object3D, on: boolean) {
     root.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
+      // LineBasicMaterial has no wireframe property; skip line objects.
       if (!mesh.isMesh) return;
       const mat = mesh.material as THREE.Material | THREE.Material[];
       if (Array.isArray(mat)) {
@@ -203,6 +216,31 @@ export class SceneManager {
         (mat as THREE.MeshBasicMaterial).wireframe = on;
       }
     });
+  }
+
+  // Enumerate the unique layer names present on object userData. DWG-sourced
+  // glbs tag every node with extras.layer; non-DWG glbs (e.g. Revit) return
+  // an empty list so the LayerPanel can hide itself.
+  getLayers(): { name: string; color?: [number, number, number] }[] {
+    const seen = new Map<string, [number, number, number] | undefined>();
+    this.scene.traverse((obj) => {
+      const layer = obj.userData?.layer as string | undefined;
+      if (!layer) return;
+      if (seen.has(layer)) return;
+      const color = obj.userData?.layerColor as
+        | [number, number, number]
+        | undefined;
+      seen.set(layer, color);
+    });
+    return Array.from(seen.entries()).map(([name, color]) => ({ name, color }));
+  }
+
+  setLayerVisibility(name: string, visible: boolean) {
+    this.scene.traverse((obj) => {
+      const layer = obj.userData?.layer as string | undefined;
+      if (layer === name) obj.visible = visible;
+    });
+    this.invalidate();
   }
 
   hideSelected() {
@@ -428,11 +466,20 @@ export class SceneManager {
     this.pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
     this.raycaster.setFromCamera(this.pointer, this.camera);
     const hits = this.raycaster.intersectObjects(this.scene.children, true);
-    const mesh = hits.find((h) => (h.object as THREE.Mesh).isMesh)?.object as
-      | THREE.Mesh
-      | undefined;
-    this.setHighlighted(mesh ?? null);
-    this.pickCallback(mesh ?? null);
+    const obj = hits.find((h) => {
+      const o = h.object as THREE.Mesh & THREE.LineSegments;
+      return o.isMesh || o.isLineSegments || (o as THREE.Line).isLine;
+    })?.object;
+    // Pick callback signature still expects Mesh | null for highlight reasons
+    // (the tint clone path is mesh-shaped). For lines we surface the click via
+    // userData lookup but skip the highlight to avoid material churn.
+    if (obj && (obj as THREE.Mesh).isMesh) {
+      this.setHighlighted(obj as THREE.Mesh);
+      this.pickCallback(obj as THREE.Mesh);
+    } else {
+      this.setHighlighted(null);
+      this.pickCallback((obj as THREE.Mesh) ?? null);
+    }
   };
 
   private lastMiddleDownAt = 0;

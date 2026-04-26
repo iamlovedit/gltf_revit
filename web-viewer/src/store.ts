@@ -10,7 +10,13 @@ export interface ElementProps {
   category?: string;
   family?: string;
   type?: string;
+  layer?: string;
   parameters?: Record<string, unknown>;
+}
+
+export interface LayerInfo {
+  name: string;
+  color?: [number, number, number];
 }
 
 interface ViewerState {
@@ -22,6 +28,8 @@ interface ViewerState {
   wireframeEnabled: boolean;
   cameraMode: CameraMode;
   hiddenCount: number;
+  layers: LayerInfo[];
+  layerVisibility: Record<string, boolean>;
   setProgress: (p: number) => void;
   setLoading: (b: boolean) => void;
   setSelected: (p: ElementProps | null) => void;
@@ -30,6 +38,8 @@ interface ViewerState {
   setWireframeEnabled: (b: boolean) => void;
   setCameraMode: (m: CameraMode) => void;
   setHiddenCount: (n: number) => void;
+  setLayers: (layers: LayerInfo[]) => void;
+  setLayerVisibility: (name: string, visible: boolean) => void;
 }
 
 export const useViewerStore = create<ViewerState>((set) => ({
@@ -41,6 +51,8 @@ export const useViewerStore = create<ViewerState>((set) => ({
   wireframeEnabled: false,
   cameraMode: "perspective",
   hiddenCount: 0,
+  layers: [],
+  layerVisibility: {},
   setProgress: (progress) => set({ progress }),
   setLoading: (loading) => set({ loading }),
   setSelected: (selected) => set({ selected }),
@@ -49,4 +61,13 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setWireframeEnabled: (wireframeEnabled) => set({ wireframeEnabled }),
   setCameraMode: (cameraMode) => set({ cameraMode }),
   setHiddenCount: (hiddenCount) => set({ hiddenCount }),
+  setLayers: (layers) =>
+    set({
+      layers,
+      layerVisibility: Object.fromEntries(layers.map((l) => [l.name, true])),
+    }),
+  setLayerVisibility: (name, visible) =>
+    set((s) => ({
+      layerVisibility: { ...s.layerVisibility, [name]: visible },
+    })),
 }));

@@ -1,12 +1,12 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace RevitGltfExporter.Export
+namespace GltfExporter.Shared
 {
     // P/Invoke bindings to draco_encoder.dll (built from draco-1.5.7 via
     // ../draco_encoder_wrapper/build.ps1). The DLL is expected to live next
-    // to RevitGltfExporter.dll.
-    internal static class DracoNative
+    // to the consuming assembly (Revit/AutoCAD plugin dll).
+    public static class DracoNative
     {
         private const string Dll = "draco_encoder";
 
@@ -74,7 +74,7 @@ namespace RevitGltfExporter.Export
         }
     }
 
-    internal sealed class DracoEncodedPrimitive
+    public sealed class DracoEncodedPrimitive
     {
         public readonly byte[] EncodedBytes;
         public readonly int PositionAttrId;

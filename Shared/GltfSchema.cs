@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace RevitGltfExporter.Export
+namespace GltfExporter.Shared
 {
     // Minimal glTF 2.0 POCOs — only the fields this exporter writes.
-    internal class GltfRoot
+    public class GltfRoot
     {
         [JsonProperty("asset")]
         public GltfAsset Asset { get; set; } = new GltfAsset();
@@ -32,21 +32,21 @@ namespace RevitGltfExporter.Export
         public object Extras { get; set; }
     }
 
-    internal class GltfAsset
+    public class GltfAsset
     {
         [JsonProperty("version")]
         public string Version { get; set; } = "2.0";
         [JsonProperty("generator")]
-        public string Generator { get; set; } = "RevitGltfExporter";
+        public string Generator { get; set; } = "GltfExporter";
     }
 
-    internal class GltfScene
+    public class GltfScene
     {
         [JsonProperty("nodes")]
         public List<int> Nodes { get; set; } = new List<int>();
     }
 
-    internal class GltfNode
+    public class GltfNode
     {
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
@@ -60,7 +60,7 @@ namespace RevitGltfExporter.Export
         public object Extras { get; set; }
     }
 
-    internal class GltfMesh
+    public class GltfMesh
     {
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
@@ -68,7 +68,7 @@ namespace RevitGltfExporter.Export
         public List<GltfPrimitive> Primitives { get; set; } = new List<GltfPrimitive>();
     }
 
-    internal class GltfPrimitive
+    public class GltfPrimitive
     {
         [JsonProperty("attributes")]
         public Dictionary<string, int> Attributes { get; set; } = new Dictionary<string, int>();
@@ -82,7 +82,7 @@ namespace RevitGltfExporter.Export
         public Dictionary<string, object> Extensions { get; set; }
     }
 
-    internal class GltfMaterial
+    public class GltfMaterial
     {
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
@@ -94,7 +94,7 @@ namespace RevitGltfExporter.Export
         public string AlphaMode { get; set; }
     }
 
-    internal class GltfPbr
+    public class GltfPbr
     {
         [JsonProperty("baseColorFactor")]
         public float[] BaseColorFactor { get; set; } = new[] { 0.8f, 0.8f, 0.8f, 1f };
@@ -104,7 +104,7 @@ namespace RevitGltfExporter.Export
         public float RoughnessFactor { get; set; } = 0.8f;
     }
 
-    internal class GltfAccessor
+    public class GltfAccessor
     {
         // Nullable: KHR_draco_mesh_compression accessors omit bufferView because
         // the extension supplies the decoded data.
@@ -124,7 +124,7 @@ namespace RevitGltfExporter.Export
         public float[] Max { get; set; }
     }
 
-    internal class GltfBufferView
+    public class GltfBufferView
     {
         [JsonProperty("buffer")]
         public int Buffer { get; set; }
@@ -136,7 +136,7 @@ namespace RevitGltfExporter.Export
         public int? Target { get; set; }
     }
 
-    internal class GltfBuffer
+    public class GltfBuffer
     {
         [JsonProperty("byteLength")]
         public int ByteLength { get; set; }
@@ -144,15 +144,26 @@ namespace RevitGltfExporter.Export
         public string Uri { get; set; }
     }
 
-    internal static class GltfComponentType
+    public static class GltfComponentType
     {
         public const int UnsignedInt = 5125;
         public const int Float = 5126;
     }
 
-    internal static class GltfTarget
+    public static class GltfTarget
     {
         public const int ArrayBuffer = 34962;
         public const int ElementArrayBuffer = 34963;
+    }
+
+    public static class GltfPrimitiveMode
+    {
+        public const int Points = 0;
+        public const int Lines = 1;
+        public const int LineLoop = 2;
+        public const int LineStrip = 3;
+        public const int Triangles = 4;
+        public const int TriangleStrip = 5;
+        public const int TriangleFan = 6;
     }
 }
