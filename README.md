@@ -6,6 +6,11 @@
 - `draco_encoder_wrapper`：基于 Draco 的原生压缩 DLL，供 Revit 插件通过 P/Invoke 调用。
 - `web-viewer`：基于 Vite + React + TypeScript + three.js 的前端 GLB 查看器。
 
+## 展示
+
+![](docs/viewer.png)
+![](docs/viewer1.png)
+
 ## 环境要求
 
 建议在 Windows 64-bit 环境下编译和安装插件。
