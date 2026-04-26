@@ -7,7 +7,16 @@
       "Bash(npm run *)",
       "Bash(git log *)",
       "Bash(pnpm tsc *)",
-      "Bash(pnpm build *)"
+      "Bash(pnpm build *)",
+      "Bash(where msbuild *)",
+      "Bash(where dotnet *)",
+      "Bash(\"C:/Program Files/dotnet/dotnet.exe\" --version)",
+      "Bash(\"C:/Program Files/dotnet/dotnet.exe\" --list-sdks)",
+      "Bash(\"C:/Program Files/dotnet/dotnet.exe\" build Shared.csproj -c Release /p:Platform=x64)",
+      "Bash(\"C:/Program Files/dotnet/dotnet.exe\" build Shared.csproj -c Release -p:Platform=x64)",
+      "Bash(\"C:/Program Files/dotnet/dotnet.exe\" restore Shared.csproj)",
+      "Bash(\"C:/Program Files/dotnet/dotnet.exe\" build Shared.csproj -c Release -p:Platform=x64 --no-restore)",
+      "Bash(\"C:/Program Files/dotnet/dotnet.exe\" build RevitGltfExporter.sln -c Release -p:Platform=x64 -p:RevitInstallPath=\"C:/Program Files/Autodesk/Revit 2019\")"
     ]
   }
 }

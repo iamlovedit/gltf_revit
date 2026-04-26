@@ -1,7 +1,7 @@
 using System.Windows;
 using GltfExporter.Shared;
 
-namespace RevitGltfExporter.UI
+namespace AutoCadGltfExporter.UI
 {
     public partial class ExportOptionsWindow : Window
     {

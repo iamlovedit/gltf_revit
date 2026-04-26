@@ -10,6 +10,7 @@
 
 ![](docs/viewer.png)
 ![](docs/viewer1.png)
+![](docs/viewer2.png)
 
 ## 环境要求
 

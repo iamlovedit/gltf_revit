@@ -4,6 +4,7 @@ using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Microsoft.Win32;
+using GltfExporter.Shared;
 using RevitGltfExporter.Export;
 using RevitGltfExporter.UI;
 

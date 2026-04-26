@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
-namespace RevitGltfExporter.Export
+namespace GltfExporter.Shared
 {
     // Assembles glTF logical data + one big binary buffer, then writes a valid .glb container.
-    internal class GltfBuilder
+    public class GltfBuilder
     {
         private readonly GltfRoot _root = new GltfRoot();
         private readonly MemoryStream _binary = new MemoryStream();
@@ -76,7 +76,7 @@ namespace RevitGltfExporter.Export
             return _root.Accessors.Count - 1;
         }
 
-        private int WriteBufferView(byte[] data, int target, int alignment)
+        internal int WriteBufferView(byte[] data, int target, int alignment)
         {
             // glTF requires bufferView offsets to honor component alignment.
             var pad = (alignment - (_binary.Length % alignment)) % alignment;
@@ -142,7 +142,7 @@ namespace RevitGltfExporter.Export
             return prim;
         }
 
-        private int AddShadowAccessor(int count, int componentType, string type, float[] min, float[] max)
+        internal int AddShadowAccessor(int count, int componentType, string type, float[] min, float[] max)
         {
             _root.Accessors.Add(new GltfAccessor
             {
@@ -156,7 +156,7 @@ namespace RevitGltfExporter.Export
             return _root.Accessors.Count - 1;
         }
 
-        private void EnsureExtensionDeclared(string name, bool required)
+        internal void EnsureExtensionDeclared(string name, bool required)
         {
             if (_root.ExtensionsUsed == null) _root.ExtensionsUsed = new List<string>();
             if (!_root.ExtensionsUsed.Contains(name)) _root.ExtensionsUsed.Add(name);

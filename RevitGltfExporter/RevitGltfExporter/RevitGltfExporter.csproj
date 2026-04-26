@@ -14,8 +14,6 @@
     <UseWpf>true</UseWpf>
     <PlatformTarget>x64</PlatformTarget>
     <RevitInstallPath Condition="'$(RevitInstallPath)' == ''">C:\Program Files\Autodesk\Revit 2019</RevitInstallPath>
-    <DracoEncoderConfiguration Condition="'$(DracoEncoderConfiguration)' == ''">Release</DracoEncoderConfiguration>
-    <DracoEncoderDll>..\..\draco_encoder_wrapper\build\bin\$(DracoEncoderConfiguration)\draco_encoder.dll</DracoEncoderDll>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
@@ -58,14 +56,10 @@
   <ItemGroup>
     <Compile Include="Application.cs" />
     <Compile Include="Commands\ExportGlbCommand.cs" />
-    <Compile Include="Export\DracoNative.cs" />
     <Compile Include="Export\GlbExportContext.cs" />
-    <Compile Include="Export\GltfBuilder.cs" />
-    <Compile Include="Export\GltfSchema.cs" />
     <Compile Include="Export\MaterialCollector.cs" />
     <Compile Include="Export\PropertyCollector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UI\ExportOptions.cs" />
     <Compile Include="UI\ExportOptionsWindow.xaml.cs">
       <DependentUpon>ExportOptionsWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -81,17 +75,15 @@
     <None Include="Resources\RevitGltfExporter.addin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="$(DracoEncoderDll)">
-      <Link>draco_encoder.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Visible>false</Visible>
-    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Shared.csproj">
+      <Project>{A1B2C3D4-E5F6-4789-A0B1-C2D3E4F5A6B7}</Project>
+      <Name>Shared</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureDracoEncoderDll" BeforeTargets="PrepareForBuild">
-    <Error Condition="!Exists('$(DracoEncoderDll)')" Text="draco_encoder.dll not found at '$(DracoEncoderDll)'. Build the native wrapper first: powershell -File ..\..\draco_encoder_wrapper\build.ps1 (use -Config Debug and pass /p:DracoEncoderConfiguration=Debug to msbuild for a debug build)." />
-  </Target>
 </Project>
