@@ -115,9 +115,44 @@ msbuild .\RevitGltfExporter\RevitGltfExporter.sln /p:Configuration=Release /p:Pl
 msbuild .\RevitGltfExporter\RevitGltfExporter.sln /p:Configuration=Debug /p:Platform=x64 /p:DracoEncoderConfiguration=Debug
 ```
 
+## 一键构建并安装插件
+
+推荐使用安装脚本完成 Draco、Revit 插件、AutoCAD 插件的构建和安装。脚本会读取项目中的 build 输出目录，生成当前机器可用的 Revit `.addin` 文件，并把 AutoCAD bundle 复制到所有用户插件目录。
+
+由于脚本默认写入 `%ProgramData%`，请在管理员 PowerShell 中从仓库根目录执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1
+```
+
+默认参数等价于：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Configuration Release -Platform x64 -Target Both -RevitYear 2019
+```
+
+如果需要 Debug 构建：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Configuration Debug
+```
+
+如果只安装其中一个插件：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Target Revit
+powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Target AutoCAD
+```
+
+如果 Autodesk 产品安装在非默认路径，可以透传给 MSBuild：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -RevitInstallPath "D:\Autodesk\Revit 2019" -AutoCadInstallPath "D:\Autodesk\AutoCAD 2024"
+```
+
 ## 安装到 Revit 2019
 
-Revit 通过 `.addin` 文件加载插件。插件安装目录为：
+如果不使用上面的一键脚本，也可以手动创建 Revit `.addin` 文件。Revit 通过 `.addin` 文件加载插件，插件安装目录为：
 
 ```text
 %ProgramData%\Autodesk\Revit\Addins\2019\
@@ -238,7 +273,7 @@ msbuild .\AutoCadGltfExporter\AutoCadGltfExporter.sln /p:Configuration=Release /
 
 ## 安装到 AutoCAD
 
-推荐使用 AutoCAD Autoloader 方式加载插件。将整个 bundle 目录复制到以下任一目录：
+如果不使用上面的一键脚本，也可以手动复制 AutoCAD bundle。推荐使用 AutoCAD Autoloader 方式加载插件，将整个 bundle 目录复制到以下任一目录：
 
 ```text
 %AppData%\Autodesk\ApplicationPlugins\
