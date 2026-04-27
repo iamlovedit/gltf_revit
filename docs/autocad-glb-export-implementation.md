@@ -28,7 +28,204 @@ DWG ModelSpace
   -> .glb
 ```
 
-## 2. ModelSpace 遍历和实体分派
+## 2. glTF 和 GLB 数据结构
+
+glTF 2.0 可以理解为“JSON 结构描述 + 二进制数据块”。本项目最终写出的是 Binary glTF，即 `.glb` 文件，它把 JSON 和二进制 BIN 合在同一个文件里。
+
+GLB 文件由三部分组成：
+
+```text
+GLB header
+  magic/version/totalLength
+JSON chunk
+  glTF scene、node、mesh、material、accessor、bufferView 等结构
+BIN chunk
+  顶点、法线、线段索引、三角面索引，或 Draco 压缩后的 primitive 数据
+```
+
+AutoCAD 导出的核心引用链如下：
+
+```text
+GltfRoot
+  scenes[0]
+    nodes[] -> layer GltfNode
+      mesh -> layer GltfMesh
+        primitives[] -> GltfPrimitive
+          TRIANGLES primitive
+            attributes["POSITION"] -> GltfAccessor -> GltfBufferView
+            attributes["NORMAL"]   -> GltfAccessor -> GltfBufferView
+            indices                -> GltfAccessor -> GltfBufferView
+          LINES primitive
+            attributes["POSITION"] -> GltfAccessor -> GltfBufferView
+            indices                -> GltfAccessor -> GltfBufferView
+          material                 -> GltfMaterial
+      bufferViews[] -> GltfBufferView
+        buffer = 0 -> GltfBuffer / GLB BIN chunk
+      children[] -> reusable block instance GltfNode
+```
+
+也就是说，`node` 和 `mesh` 不直接保存顶点数组。真正的顶点、法线和索引字节都在 BIN chunk 中；JSON 负责描述场景层级、材质、primitive 类型，以及每段二进制数据应按什么类型解释。
+
+### 2.1 JSON 根对象
+
+共享模块 `Shared/GltfSchema.cs` 中的 `GltfRoot` 对应 glTF JSON 根对象。当前 AutoCAD 导出主要写入这些字段：
+
+- `asset`：文件元信息，当前固定为 `version = "2.0"`、`generator = "GltfExporter"`。
+- `scene`：默认场景索引，当前为 `0`。
+- `scenes`：场景列表。`DwgExportContext.EmitLayerNodes()` 会显式创建默认 scene，并把所有图层 node 放进去。
+- `nodes`：场景节点列表。普通实体聚合到 `layer_*` node，可复用块参照作为图层 node 的 child node。
+- `meshes`：网格列表。图层 node 绑定图层 mesh；可复用块实例 node 绑定块模板 mesh。
+- `materials`：材质列表。primitive 通过 `material` 索引引用这里的材质，CAD 侧当前按 RGB 去重。
+- `accessors`：typed view 列表。accessor 描述二进制数据的组件类型、元素数量、向量类型和可选包围范围。
+- `bufferViews`：二进制切片列表。bufferView 指向 `buffers[0]` 中的一段连续字节。
+- `buffers`：二进制 buffer 列表。GLB 输出中只有一个 buffer，即 BIN chunk。
+- `extensionsUsed`、`extensionsRequired`：启用 Draco 时写入 `KHR_draco_mesh_compression`。
+- `extras`：非标准扩展信息。根对象保存来源和单位；图层 node 和块实例 node 保存 CAD 属性。
+
+### 2.2 AutoCAD 场景结构
+
+AutoCAD 导出不是一实体一 node，而是优先按图层聚合：
+
+- `scenes[0].nodes` 保存所有图层 node 的索引。
+- 每个图层 node 名称形如 `layer_0`、`layer_Walls`，通常绑定一个图层 mesh。
+- 图层 mesh 内可以同时包含三角面 primitive 和线 primitive。
+- 普通实体的属性不会各自生成 node，而是集中写入图层 node 的 `extras.entities`。
+- 可复用块参照会单独生成 child node，并挂到当前图层 node 的 `children`。
+- 块实例 node 通过 `mesh` 引用缓存的块模板 mesh，并通过 `matrix` 保存插入变换。
+
+`LayerBucket` 是写入 glTF 前的中间聚合结构：
+
+```text
+LayerBucket
+  Triangles:     List<MeshPrimitiveBucket>
+  Lines:         List<MeshPrimitiveBucket>
+  InstanceNodes: List<GltfNode>
+  PerEntityExtras
+```
+
+`Triangles` 和 `Lines` 分开保存，是因为 glTF 一个 primitive 只有一个 `mode`：三角面使用 `mode = 4`，线段使用 `mode = 1`。
+
+### 2.3 accessor、bufferView、buffer
+
+几何数组从 C# 的 `List<float>` 或 `List<int>` 写入 glTF 时，会被拆成三层：
+
+```text
+List<float>/List<int>
+  -> byte[]
+  -> GltfBufferView: byteOffset + byteLength + target
+  -> GltfAccessor: componentType + count + type + min/max
+  -> GltfPrimitive.attributes 或 GltfPrimitive.indices
+```
+
+`GltfBufferView` 描述 BIN chunk 中的一段字节：
+
+- `buffer = 0`：当前始终引用唯一的 GLB BIN chunk。
+- `byteOffset`：这段数据在 BIN chunk 中的起始字节位置。
+- `byteLength`：这段数据的字节长度。
+- `target = 34962`：顶点属性数据，即 `ARRAY_BUFFER`。
+- `target = 34963`：索引数据，即 `ELEMENT_ARRAY_BUFFER`。
+
+`GltfAccessor` 描述 bufferView 中的数据应该怎样解释：
+
+- `componentType = 5126`：`FLOAT`，用于 position 和 normal。
+- `componentType = 5125`：`UNSIGNED_INT`，用于 triangle index 和 line index。
+- `type = "VEC3"`：每个元素 3 个分量，用于 `POSITION` 和 `NORMAL`。
+- `type = "SCALAR"`：每个元素 1 个分量，用于 `indices`。
+- `count`：元素数量，不是字节数。例如 position 有 300 个 float 时，`count = 100`。
+- `min/max`：当前给 `POSITION` 写入，用于记录 primitive 的包围范围。
+
+CAD 当前不写 `TEXCOORD_0`，因为导出逻辑没有从 DWG 实体构造逐顶点 UV。`GltfBuilder` 为每个属性单独写一个 bufferView，所以 accessor 的 `byteOffset` 保持默认 `0`；真正的字节偏移在 bufferView 的 `byteOffset` 上。
+
+### 2.4 一个图层的 glTF 结构示例
+
+一个图层同时包含三角面、线段和一个可复用块实例时，导出的 JSON 关系大致如下：
+
+```json
+{
+  "scene": 0,
+  "scenes": [
+    { "nodes": [0] }
+  ],
+  "nodes": [
+    {
+      "name": "layer_Walls",
+      "mesh": 0,
+      "children": [1],
+      "extras": {
+        "layer": "Walls",
+        "layerColor": [204, 204, 204]
+      }
+    },
+    {
+      "name": "block_Door",
+      "mesh": 1,
+      "matrix": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 5, 0, 2, 1],
+      "extras": {
+        "handle": "2A1",
+        "layer": "Walls",
+        "entityType": "BlockReference"
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "layer_Walls",
+      "primitives": [
+        {
+          "attributes": { "POSITION": 0, "NORMAL": 1 },
+          "indices": 2,
+          "material": 0,
+          "mode": 4
+        },
+        {
+          "attributes": { "POSITION": 3 },
+          "indices": 4,
+          "material": 0,
+          "mode": 1
+        }
+      ]
+    },
+    {
+      "name": "block_Door_template",
+      "primitives": [
+        {
+          "attributes": { "POSITION": 5, "NORMAL": 6 },
+          "indices": 7,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "accessors": [
+    { "bufferView": 0, "byteOffset": 0, "componentType": 5126, "count": 100, "type": "VEC3", "min": [0, 0, 0], "max": [10, 3, 4] },
+    { "bufferView": 1, "byteOffset": 0, "componentType": 5126, "count": 100, "type": "VEC3" },
+    { "bufferView": 2, "byteOffset": 0, "componentType": 5125, "count": 300, "type": "SCALAR" },
+    { "bufferView": 3, "byteOffset": 0, "componentType": 5126, "count": 20, "type": "VEC3", "min": [0, 0, 0], "max": [10, 3, 4] },
+    { "bufferView": 4, "byteOffset": 0, "componentType": 5125, "count": 38, "type": "SCALAR" },
+    { "bufferView": 5, "byteOffset": 0, "componentType": 5126, "count": 24, "type": "VEC3", "min": [0, 0, 0], "max": [1, 2, 2] },
+    { "bufferView": 6, "byteOffset": 0, "componentType": 5126, "count": 24, "type": "VEC3" },
+    { "bufferView": 7, "byteOffset": 0, "componentType": 5125, "count": 36, "type": "SCALAR" }
+  ],
+  "bufferViews": [
+    { "buffer": 0, "byteOffset": 0, "byteLength": 1200, "target": 34962 },
+    { "buffer": 0, "byteOffset": 1200, "byteLength": 1200, "target": 34962 },
+    { "buffer": 0, "byteOffset": 2400, "byteLength": 1200, "target": 34963 },
+    { "buffer": 0, "byteOffset": 3600, "byteLength": 240, "target": 34962 },
+    { "buffer": 0, "byteOffset": 3840, "byteLength": 152, "target": 34963 },
+    { "buffer": 0, "byteOffset": 3996, "byteLength": 288, "target": 34962 },
+    { "buffer": 0, "byteOffset": 4284, "byteLength": 288, "target": 34962 },
+    { "buffer": 0, "byteOffset": 4572, "byteLength": 144, "target": 34963 }
+  ],
+  "buffers": [
+    { "byteLength": 4716 }
+  ]
+}
+```
+
+示例里的数字只用于说明引用关系。实际 `byteOffset` 会受 `GltfBuilder.WriteBufferView(...)` 的对齐填充影响，最终 BIN chunk 也会在 `WriteGlb(...)` 中补齐到 4 字节。
+
+## 3. ModelSpace 遍历和实体分派
 
 `DwgExportContext.Run()` 开启事务后：
 
@@ -37,7 +234,7 @@ DWG ModelSpace
 3. 创建根 `EntityContext`，包含当前有效图层、继承颜色、变换矩阵和块递归栈。
 4. 遍历 ModelSpace 中可见的 `Entity`。
 5. 调用 `ProcessEntityToScene(entity, tr, rootContext)`。
-6. 结束后调用 `EmitLayerNodes()` 把图层 bucket 写成 glTF scene。
+6. 结束后调用 `EmitLayerNodes()` 把图层 bucket 写成 glTF scene、node、mesh 和 primitive。
 
 实体分派规则：
 
@@ -48,11 +245,29 @@ DWG ModelSpace
 - `Curve` -> `ProcessCurveToScene`。
 - 其他未知实体 -> 尝试按 annotation explode 后递归。
 
-## 3. 图元如何变成 glTF
+## 4. 图元如何变成 glTF
 
 AutoCAD 导出不是一实体一 node。当前实现按图层聚合，最终通常是一个图层 node 绑定一个图层 mesh，图层 mesh 内按材质拆成多个 primitive。块参照如果可复用，会作为图层 node 的 child node 写入。
 
-### 3.1 3D 实体三角化
+`LayerBucket` 到 glTF 的映射如下：
+
+| `LayerBucket` 数据 | glTF 写入位置 | 说明 |
+| --- | --- | --- |
+| `Triangles` | `layer mesh.primitives[]` | 每个 `MeshPrimitiveBucket` 写成 `mode = 4` 的三角面 primitive |
+| `Lines` | `layer mesh.primitives[]` | 每个 `MeshPrimitiveBucket` 写成 `mode = 1` 的线 primitive |
+| `InstanceNodes` | `layer node.children` | 可复用块参照写成 child `GltfNode` |
+| `PerEntityExtras` | `layer node.extras.entities` | 仅 `IncludeProperties = true` 时写入 |
+
+`MeshPrimitiveBucket` 到 glTF primitive 的字段映射如下：
+
+| `MeshPrimitiveBucket` 数据 | 三角面 primitive | 线 primitive |
+| --- | --- | --- |
+| `Positions` | `attributes["POSITION"]`，`VEC3 / FLOAT` | `attributes["POSITION"]`，`VEC3 / FLOAT` |
+| `Normals` | `attributes["NORMAL"]`，`VEC3 / FLOAT` | 不写入 |
+| `Indices` | `indices`，`SCALAR / UNSIGNED_INT`，每 3 个索引组成一个三角形 | `indices`，`SCALAR / UNSIGNED_INT`，每 2 个索引组成一条线段 |
+| `Material` | `primitive.material` | `primitive.material` |
+
+### 4.1 3D 实体三角化
 
 `ProcessSolidToScene` 调用 `SolidTessellator.Tessellate(entity)`。
 
@@ -96,7 +311,9 @@ AutoCAD 在绘制 `Solid3d`、`Surface`、`Region`、`Body`、实心 `Hatch` 等
 4. 根据三角索引计算面积加权顶点法线并写入 `Normals`。
 5. 把局部索引加上 `baseIdx` 后追加到 `Indices`。
 
-### 3.2 曲线采样为 LINES
+这些数据先保存在图层的 `Triangles` bucket 中。最终 `EmitTriangleBuckets(...)` 会把每个材质 bucket 写成一个三角面 `GltfPrimitive`：普通路径写 `POSITION`、`NORMAL` 和 `indices` 三个 accessor；Draco 路径调用 `GltfBuilder.AddDracoPrimitive(...)`。
+
+### 4.2 曲线采样为 LINES
 
 `ProcessCurveToScene` 调用 `CurveSampler.Sample(curve)`，把 DWG 曲线离散成一串 `Point3d`。
 
@@ -127,9 +344,9 @@ pts[0] - pts[1] - pts[2] - ...
 - `indices` accessor。
 - `mode = 1`，即 glTF `LINES`。
 
-线几何不走 Draco 压缩。
+线几何没有 `NORMAL`，也不走 Draco 压缩。即使 `EnableDraco = true`，线 primitive 仍然写成普通 bufferView + accessor。
 
-### 3.3 文字、标注和非实心填充
+### 4.3 文字、标注和非实心填充
 
 `ProcessAnnotationToScene` 使用 `TextExploder.ExplodeRecursive(entity, maxDepth: 4)`。
 
@@ -152,7 +369,7 @@ pts[0] - pts[1] - pts[2] - ...
 (0,1,2), (1,3,2)
 ```
 
-### 3.4 块参照
+### 4.4 块参照
 
 `ProcessBlockReferenceToScene` 会先取得块定义 `BlockTableRecord`，再判断是否可以做实例复用。
 
@@ -181,7 +398,7 @@ pts[0] - pts[1] - pts[2] - ...
 
 为避免死循环，块处理限制最大深度为 32，并通过 `BlockStack` 检测递归块引用。
 
-## 4. 坐标和单位转换
+## 5. 坐标和单位转换
 
 `DwgUnitConverter` 负责单位和坐标系转换。
 
@@ -205,7 +422,7 @@ normal: (X, Y, Z) -> (X, Z, -Y)
 
 块参照矩阵使用 `ToGltfMatrix(Matrix3d m, double scale)` 写成 glTF node matrix。矩阵按 glTF 要求使用 column-major `float[16]`，并对 translation 应用单位缩放。
 
-## 5. 图层、颜色和材质
+## 6. 图层、颜色和材质
 
 CAD 导出按图层聚合几何。`LayerBucket` 包含：
 
@@ -235,7 +452,7 @@ metallicFactor = 0
 roughnessFactor = 0.8
 ```
 
-## 6. 属性写入 extras
+## 7. 属性写入 extras
 
 根对象 `GltfRoot.Extras`：
 
@@ -268,7 +485,7 @@ roughnessFactor = 0.8
 - `extDict`
 - `entityType`
 
-## 7. GLB 写入机制
+## 8. GLB 写入机制
 
 共享模块 `Shared/GltfBuilder.cs` 负责组装 glTF 结构和二进制数据。
 
@@ -293,15 +510,41 @@ Positions + index pairs
 如果 `EnableDraco = false`：
 
 - 顶点属性写入普通 BIN bufferView。
-- `POSITION`、`NORMAL`、`indices` 都有实际 `bufferView`。
+- 三角面 primitive 的 `POSITION`、`NORMAL`、`indices` 都有实际 `bufferView`。
+- 线 primitive 的 `POSITION` 和 `indices` 也都有实际 `bufferView`，`mode = 1`。
 
 如果 `EnableDraco = true`：
 
 - 三角面调用 `GltfBuilder.AddDracoPrimitive(...)`。
 - Draco 数据写入一个无 `target` 的压缩 bufferView。
-- primitive 写入 `KHR_draco_mesh_compression`。
-- accessor 作为 shadow accessor 保留 `count/type/min/max` 等元数据。
+- primitive 写入 `KHR_draco_mesh_compression`，其中 `bufferView` 指向压缩字节，`attributes` 保存 glTF 属性名到 Draco attribute id 的映射。
+- accessor 作为 shadow accessor 保留 `count/type/componentType/min/max` 等元数据，但不包含 `bufferView`。
 - 线 primitive 仍保持未压缩。
+
+普通三角面 primitive 的构造过程：
+
+1. `EmitTriangleBuckets(...)` 对每个 `MeshPrimitiveBucket` 计算 `Positions` 的 `min/max`。
+2. `AddFloat3Accessor(pb.Positions, min, max, GltfTarget.ArrayBuffer)` 创建 `POSITION` accessor。
+3. `AddFloat3Accessor(pb.Normals, null, null, GltfTarget.ArrayBuffer)` 创建 `NORMAL` accessor。
+4. `AddIndexAccessor(pb.Indices)` 创建 index accessor，bufferView 的 `target = ELEMENT_ARRAY_BUFFER`。
+5. `GltfPrimitive.Attributes` 保存属性名到 accessor index 的映射，`GltfPrimitive.Indices` 保存索引 accessor index。
+
+线 primitive 的构造过程：
+
+1. `EmitLineBuckets(...)` 调用 `LineBuilder.AddLinePrimitive(pb.Positions, pb.Indices, pb.Material)`。
+2. `LineBuilder` 为 `Positions` 创建 `POSITION` accessor，并写入 `min/max`。
+3. `LineBuilder` 为线段索引创建 index accessor。
+4. primitive 设置 `Mode = GltfPrimitiveMode.Lines`，即 JSON 中的 `mode = 1`。
+
+Draco 三角面 primitive 的构造过程：
+
+1. `EmitTriangleBuckets(...)` 调用 `GltfBuilder.AddDracoPrimitive(...)`。
+2. `DracoNative.Encode(...)` 把 position、normal 和 triangle indices 编码为 Draco 字节；CAD 当前传入的 UV 为 `null`。
+3. 压缩字节写入一个无 `target` 的 bufferView。
+4. `extensions.KHR_draco_mesh_compression.bufferView` 指向压缩 bufferView。
+5. `extensions.KHR_draco_mesh_compression.attributes` 保存 `POSITION`、`NORMAL` 到 Draco attribute id 的映射。
+6. `AddShadowAccessor(...)` 保留解码后 accessor 的 `count/type/componentType/min/max`，用于符合 glTF 扩展结构。
+7. `extensionsUsed` 和 `extensionsRequired` 都声明 `KHR_draco_mesh_compression`。
 
 `WriteGlb(path)` 最终写出：
 
@@ -311,7 +554,7 @@ Positions + index pairs
 
 JSON 描述 scene、nodes、meshes、materials、accessors、bufferViews、buffers；BIN chunk 保存所有顶点、索引或 Draco 压缩数据。
 
-## 8. 限制与注意事项
+## 9. 限制与注意事项
 
 - CAD 导出只遍历 ModelSpace，不导出 paper space。
 - 当前主结构按图层聚合，普通实体不会一实体一 node；实体级属性集中写入图层 node 的 `extras.entities`。
