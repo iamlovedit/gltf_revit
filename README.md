@@ -1,334 +1,173 @@
-# Revit/AutoCAD GLB 导出插件与 Web 查看器
+# 🏗️ Revit / AutoCAD GLB 导出器与 Web 查看器
 
-本仓库包含四个主要部分：
+🎯 本项目用于将 Revit 或 AutoCAD 模型导出为标准 `.glb` 文件，并在浏览器中查看模型、构件属性和图层信息。
 
-- `RevitGltfExporter`：Revit 2019 插件，用于导出 `.glb` 文件。
-- `AutoCadGltfExporter`：AutoCAD 插件，用于将当前 DWG 导出为 `.glb` 文件。
-- `draco_encoder_wrapper`：基于 Draco 的原生压缩 DLL，供导出插件通过 P/Invoke 调用。
-- `web-viewer`：基于 Vite + React + TypeScript + three.js 的前端 GLB 查看器。
+## ✨ 功能介绍
 
-## 展示
+### 🏢 Revit GLB 导出器
 
-![](docs/viewer.png)
-![](docs/viewer1.png)
-![](docs/viewer2.png)
+- 🧭 支持 Revit 2019，导出当前激活的三维视图。
+- 🧱 导出模型几何、材质以及构件层级。
+- 🏷️ 可将构件类别、族、类型和参数写入 glTF `extras`。
+- 🗜️ 可选 Draco 几何压缩，并支持设置压缩等级。
+- 📐 自动将 Revit 的英尺、Z-up 坐标转换为 glTF 使用的米、Y-up 坐标。
 
-## 实现文档
+### 📐 AutoCAD GLB 导出器
 
-- [Revit 导出 GLB 实现文档](docs/revit-glb-export-implementation.md)
-- [AutoCAD 导出 GLB 实现文档](docs/autocad-glb-export-implementation.md)
+- 🗺️ 支持 AutoCAD 2020–2024，导出当前 DWG 的 ModelSpace 内容。
+- 🧊 支持三维实体、曲面、曲线、文字、标注、填充和块参照等对象。
+- 🏷️ 保留图层、颜色、实体句柄和 XData 等信息。
+- 🔄 根据 DWG 的 `INSUNITS` 转换为米，并将 Z-up 坐标转换为 Y-up。
+- 🗜️ 可选对三维网格启用 Draco 压缩。
 
-## 环境要求
+### 🌐 Web GLB 查看器
 
-建议在 Windows 64-bit 环境下编译和安装插件。
+- 📂 从本地打开普通或 Draco 压缩的 `.glb` 文件。
+- 🖱️ 支持旋转、缩放、平移、适应屏幕和标准视图。
+- 🎥 支持透视/正交相机、线框显示、隐藏、隔离和显示全部。
+- ✂️ 支持按图层控制可见性、交互式剖面框和构件属性查看。
+- 📊 实时显示 FPS、帧耗时、三角形数量和 Draw Call。
 
-- Windows 64-bit
-- Revit 2019
-- AutoCAD 2020-2024
-- Visual Studio 2022 或可用的 MSBuild
+![🖼️ Web GLB 查看器](docs/viewer.png)
+
+## 📁 项目组成
+
+| 目录 | 说明 |
+| --- | --- |
+| `RevitGltfExporter` | Revit 2019 导出插件 |
+| `AutoCadGltfExporter` | AutoCAD 2020–2024 导出插件 |
+| `Shared` | 两个导出器共用的 glTF/GLB 构建代码 |
+| `draco_encoder_wrapper` | Draco 原生编码 DLL |
+| `web-viewer` | React + three.js Web 查看器 |
+
+## 🛠️ 源码编译
+
+### 💻 环境要求
+
+- Windows 64 位
+- Visual Studio 2022 或 Build Tools（包含 MSBuild、.NET 桌面开发和 C++ 桌面开发工具）
+- .NET Framework 4.8 Developer Pack
 - CMake
-- PowerShell
-- Node.js
-- pnpm 9
+- Revit 2019（编译 Revit 插件时需要）
+- AutoCAD 2020–2024 任一版本（编译 AutoCAD 插件时需要）
+- Node.js 和 pnpm 9（编译 Web 查看器时需要）
 
-> Revit 插件项目默认查找 Revit API 的路径为 `C:\Program Files\Autodesk\Revit 2019`。如果 Revit 安装在其他目录，需要在构建时覆盖 `RevitInstallPath`。
+以下命令均在仓库根目录的 PowerShell 中执行。
 
-> AutoCAD 插件项目会自动查找 `C:\Program Files\Autodesk\AutoCAD 2020` 到 `AutoCAD 2024`，如果 AutoCAD 安装在其他目录，需要在构建时覆盖 `AutoCadInstallPath`。
+### 1️⃣ 编译 Draco 原生库
 
-## 编译 Draco 原生库
-
-`draco_encoder_wrapper` 会编译出 `draco_encoder.dll`，启用 Draco 压缩时该 DLL 必须和对应导出插件 DLL 放在同一目录下。
-
-在仓库根目录打开 PowerShell，执行：
+两个导出插件都依赖 `draco_encoder.dll`，因此应先编译它：
 
 ```powershell
-cd .\draco_encoder_wrapper
-powershell -ExecutionPolicy Bypass -File .\build.ps1 -Config Release
+New-Item -ItemType Directory -Path .\output -Force | Out-Null
+powershell -ExecutionPolicy Bypass -File .\draco_encoder_wrapper\build.ps1 -Config Release
 ```
 
-编译完成后，脚本会将 DLL 复制到：
+✅ 产物将复制到 `output\draco_encoder.dll`。
+
+### 2️⃣ 编译 Revit 插件
+
+在 Visual Studio 中打开 `RevitGltfExporter\RevitGltfExporter.sln`，选择 `Release | x64` 后构建；也可以在 Developer PowerShell 中执行：
+
+```powershell
+msbuild .\RevitGltfExporter\RevitGltfExporter.sln /m /p:Configuration=Release /p:Platform=x64
+```
+
+Revit 安装在非默认目录时，增加：
+
+```powershell
+/p:RevitInstallPath="D:\Autodesk\Revit 2019"
+```
+
+✅ 主要产物为 `output\RevitGltfExporter.dll`。
+
+### 3️⃣ 编译 AutoCAD 插件
+
+在 Visual Studio 中打开 `AutoCadGltfExporter\AutoCadGltfExporter.sln`，选择 `Release | x64` 后构建；也可以执行：
+
+```powershell
+msbuild .\AutoCadGltfExporter\AutoCadGltfExporter.sln /m /p:Configuration=Release /p:Platform=x64
+```
+
+项目会自动查找 AutoCAD 2020–2024。安装在其他目录时，增加：
+
+```powershell
+/p:AutoCadInstallPath="D:\Autodesk\AutoCAD 2024"
+```
+
+✅ 主要产物为：
 
 ```text
-output\draco_encoder.dll
+output\AutoCadGltfExporter.dll
+output\AutoCadGltfExporter.bundle\
 ```
 
-如果需要 Debug 版本，可以执行：
+### 4️⃣ 编译 Web 查看器
 
 ```powershell
-cd .\draco_encoder_wrapper
-powershell -ExecutionPolicy Bypass -File .\build.ps1 -Config Debug
+cd .\web-viewer
+pnpm install
+pnpm build
 ```
 
-## 编译 Revit 插件
+✅ 生产构建输出到 `web-viewer\dist`。本地开发可运行 `pnpm dev`，默认访问 `http://localhost:5173`。
 
-编译 Revit 插件前，请先完成 Draco 原生库编译，确保以下文件存在：
+## 📦 安装插件
 
-```text
-output\draco_encoder.dll
-```
+### ⚡ 一键构建并安装
 
-### 使用 Visual Studio 编译
-
-1. 打开解决方案：
-
-   ```text
-   RevitGltfExporter\RevitGltfExporter.sln
-   ```
-
-2. 选择构建配置：
-
-   ```text
-   Release | x64
-   ```
-
-   或：
-
-   ```text
-   Debug | x64
-   ```
-
-3. 执行 Build。
-
-插件编译产物会输出到：
-
-```text
-output\RevitGltfExporter.dll
-```
-
-### 使用 MSBuild 编译
-
-如果 Revit 安装在默认路径，可以在仓库根目录执行：
-
-```powershell
-msbuild .\RevitGltfExporter\RevitGltfExporter.sln /p:Configuration=Release /p:Platform=x64
-```
-
-如果 Revit 安装在其他路径，通过 `RevitInstallPath` 覆盖：
-
-```powershell
-msbuild .\RevitGltfExporter\RevitGltfExporter.sln /p:Configuration=Release /p:Platform=x64 /p:RevitInstallPath="D:\Autodesk\Revit 2019"
-```
-
-如果编译 Debug 插件并使用 Debug 版本的 Draco DLL，需要同时指定：
-
-```powershell
-msbuild .\RevitGltfExporter\RevitGltfExporter.sln /p:Configuration=Debug /p:Platform=x64 /p:DracoEncoderConfiguration=Debug
-```
-
-## 一键构建并安装插件
-
-推荐使用安装脚本完成 Draco、Revit 插件、AutoCAD 插件的构建和安装。脚本会读取项目中的 build 输出目录，生成当前机器可用的 Revit `.addin` 文件，并把 AutoCAD bundle 复制到所有用户插件目录。
-
-由于脚本默认写入 `%ProgramData%`，请在管理员 PowerShell 中从仓库根目录执行：
+管理员 PowerShell 中执行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1
 ```
 
-默认参数等价于：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Configuration Release -Platform x64 -Target Both -RevitYear 2019
-```
-
-如果需要 Debug 构建：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Configuration Debug
-```
-
-如果只安装其中一个插件：
+🚀 该脚本会依次构建 Draco、Revit 插件和 AutoCAD 插件，并安装到 `%ProgramData%`。也可以只安装其中一个：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Target Revit
 powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Target AutoCAD
 ```
 
-如果 Autodesk 产品安装在非默认路径，可以透传给 MSBuild：
+Autodesk 产品不在默认目录时，可通过 `-RevitInstallPath` 或 `-AutoCadInstallPath` 指定安装路径。
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -RevitInstallPath "D:\Autodesk\Revit 2019" -AutoCadInstallPath "D:\Autodesk\AutoCAD 2024"
-```
+### 🏢 手动安装 Revit 插件
 
-## 安装到 Revit 2019
+1. 将 `output\RevitGltfExporter.addin` 中的 `<Assembly>` 修改为 `output\RevitGltfExporter.dll` 的绝对路径。
+2. 将该 `.addin` 文件复制到 `%ProgramData%\Autodesk\Revit\Addins\2019\`。
+3. 确认 `RevitGltfExporter.dll`、`GltfExporter.Shared.dll`、`Newtonsoft.Json.dll` 和 `draco_encoder.dll` 位于同一目录。
+4. 重启 Revit。
 
-如果不使用上面的一键脚本，也可以手动创建 Revit `.addin` 文件。Revit 通过 `.addin` 文件加载插件，插件安装目录为：
+### 📐 手动安装 AutoCAD 插件
 
-```text
-%ProgramData%\Autodesk\Revit\Addins\2019\
-```
-
-如果目录不存在，请先创建。
-
-### 创建 addin 文件
-
-在下面目录中新建文件：
-
-```text
-%ProgramData%\Autodesk\Revit\Addins\2019\RevitGltfExporter.addin
-```
-
-文件内容示例：
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<RevitAddIns>
-  <AddIn Type="Application">
-    <Name>RevitGltfExporter</Name>
-    <Assembly>C:\path\to\gltf_revit\output\RevitGltfExporter.dll</Assembly>
-    <AddInId>4f8e3a1b-0a6d-4d1a-9a5e-7f2a1c9d3e4f</AddInId>
-    <FullClassName>RevitGltfExporter.Application</FullClassName>
-    <VendorId>LOCAL</VendorId>
-    <VendorDescription>Internal</VendorDescription>
-  </AddIn>
-</RevitAddIns>
-```
-
-请将 `<Assembly>` 修改为本机仓库中 `RevitGltfExporter.dll` 的绝对路径，例如：
-
-```xml
-<Assembly>C:\work\gltf_revit\output\RevitGltfExporter.dll</Assembly>
-```
-
-安装时请确认 `output` 目录中至少包含：
-
-```text
-output\RevitGltfExporter.dll
-output\draco_encoder.dll
-```
-
-`draco_encoder.dll` 必须和 `RevitGltfExporter.dll` 位于同一目录，否则启用 Draco 压缩导出时会加载失败。
-
-完成后启动 Revit 2019，在 Add-Ins/插件入口中使用 GLB 导出命令。
-
-## 编译 AutoCAD 插件
-
-编译 AutoCAD 插件前，建议先完成 Draco 原生库编译，确保以下文件存在：
-
-```text
-output\draco_encoder.dll
-```
-
-如果不启用 Draco 压缩，插件仍可导出未压缩 GLB；如果启用 Draco 压缩，`draco_encoder.dll` 必须和 AutoCAD 插件 DLL 位于同一目录。
-
-### 使用 Visual Studio 编译
-
-1. 打开解决方案：
-
-   ```text
-   AutoCadGltfExporter\AutoCadGltfExporter.sln
-   ```
-
-2. 选择构建配置：
-
-   ```text
-   Release | x64
-   ```
-
-   或：
-
-   ```text
-   Debug | x64
-   ```
-
-3. 执行 Build。
-
-插件编译产物会输出到：
-
-```text
-output\AutoCadGltfExporter.dll
-```
-
-同时会生成可直接部署的 AutoCAD Autoloader bundle：
-
-```text
-output\AutoCadGltfExporter.bundle
-```
-
-bundle 结构如下：
-
-```text
-AutoCadGltfExporter.bundle\
-  PackageContents.xml
-  Contents\
-    AutoCadGltfExporter.dll
-    GltfExporter.Shared.dll
-    Newtonsoft.Json.dll
-    draco_encoder.dll
-```
-
-### 使用 MSBuild 编译
-
-如果 AutoCAD 安装在项目默认可检测路径，可以在仓库根目录执行：
-
-```powershell
-msbuild .\AutoCadGltfExporter\AutoCadGltfExporter.sln /p:Configuration=Release /p:Platform=x64
-```
-
-如果 AutoCAD 安装在其他路径，通过 `AutoCadInstallPath` 覆盖：
-
-```powershell
-msbuild .\AutoCadGltfExporter\AutoCadGltfExporter.sln /p:Configuration=Release /p:Platform=x64 /p:AutoCadInstallPath="D:\Autodesk\AutoCAD 2024"
-```
-
-## 安装到 AutoCAD
-
-如果不使用上面的一键脚本，也可以手动复制 AutoCAD bundle。推荐使用 AutoCAD Autoloader 方式加载插件，将整个 bundle 目录复制到以下任一目录：
+将整个 `output\AutoCadGltfExporter.bundle` 复制到以下任一目录，然后重启 AutoCAD：
 
 ```text
 %AppData%\Autodesk\ApplicationPlugins\
 %ProgramData%\Autodesk\ApplicationPlugins\
-%ProgramFiles%\Autodesk\ApplicationPlugins\
 ```
 
-例如复制后目录应为：
+## 🚀 功能使用
 
-```text
-%AppData%\Autodesk\ApplicationPlugins\AutoCadGltfExporter.bundle\
-```
+### 🏢 从 Revit 导出 GLB
 
-安装时请确认 bundle 中至少包含：
+1. 打开 Revit 模型并切换到需要导出的三维视图。
+2. 依次打开 `GLB Tools` → `Export` → `Export GLB`。
+3. 选择是否启用 Draco 压缩、压缩等级以及是否包含构件参数。
+4. 选择保存位置，等待导出完成。
 
-```text
-AutoCadGltfExporter.bundle\PackageContents.xml
-AutoCadGltfExporter.bundle\Contents\AutoCadGltfExporter.dll
-AutoCadGltfExporter.bundle\Contents\GltfExporter.Shared.dll
-AutoCadGltfExporter.bundle\Contents\Newtonsoft.Json.dll
-```
+💡 Revit 导出器只导出当前三维视图中可见的模型内容；二维视图不能执行导出。
 
-如果导出时启用 Draco 压缩，还需要：
+### 📐 从 AutoCAD 导出 GLB
 
-```text
-AutoCadGltfExporter.bundle\Contents\draco_encoder.dll
-```
+1. 打开 DWG，确认待导出对象位于 ModelSpace 且可见。
+2. 在命令行输入 `EXPORTGLB`。
+3. 选择是否启用 Draco 压缩以及是否包含实体属性。
+4. 选择保存位置，等待命令行提示导出完成。
 
-完成后重启 AutoCAD。插件加载成功时，命令行会显示：
+### 🌐 在 Web 查看器中查看 GLB
 
-```text
-AutoCadGltfExporter loaded. Use the EXPORTGLB command to export the current drawing.
-```
-
-## 使用 AutoCAD 导出 GLB
-
-1. 在 AutoCAD 中打开需要导出的 DWG。
-2. 确认需要导出的对象位于 ModelSpace，且对象可见。
-3. 在命令行输入：
-
-   ```text
-   EXPORTGLB
-   ```
-
-4. 在导出选项窗口中选择是否启用 Draco 压缩、是否包含属性。
-5. 在保存文件窗口中选择 `.glb` 输出路径。
-6. 等待命令行显示导出完成信息。
-
-AutoCAD 导出器会按 DWG 的 `INSUNITS` 将模型单位转换为米，并将 AutoCAD 的 Z-up 坐标转换为 glTF 的 Y-up 坐标。当前实现遍历 ModelSpace 中的可见实体，支持 3D 实体、曲线、文字/标注展开、填充和块参照。
-
-## 启动前端项目
-
-前端项目位于 `web-viewer`，使用 pnpm 管理依赖。
-
-在仓库根目录执行：
+启动开发服务器：
 
 ```powershell
 cd .\web-viewer
@@ -336,83 +175,21 @@ pnpm install
 pnpm dev
 ```
 
-开发服务器默认监听：
+🌐 浏览器打开 `http://localhost:5173`，点击左上角 `Open .glb` 选择导出的文件。加载后可以：
 
-```text
-http://localhost:5173
-```
+- 🖱️ 鼠标旋转、平移和缩放模型；
+- 🔎 点击构件查看属性；
+- 👁️ 按图层显示或隐藏对象；
+- 🧰 使用底部工具栏切换视图、线框、隐藏、隔离和剖面框。
 
-如果需要生产构建：
+## ⚠️ 注意事项
 
-```powershell
-pnpm build
-```
+- 🗜️ 启用 Draco 时，`draco_encoder.dll` 必须与插件 DLL 位于同一目录。
+- 🔧 Revit 或 AutoCAD API 引用缺失时，请检查产品安装目录，并通过对应的 MSBuild 属性覆盖默认路径。
+- 🔁 插件安装或更新后，应重启 Revit/AutoCAD。
 
-构建完成后，可以本地预览：
+## 📚 相关文档
 
-```powershell
-pnpm preview
-```
-
-## 常见问题
-
-### 编译 Revit 插件提示找不到 `draco_encoder.dll`
-
-请先编译 Draco 原生库：
-
-```powershell
-cd .\draco_encoder_wrapper
-powershell -ExecutionPolicy Bypass -File .\build.ps1 -Config Release
-```
-
-然后重新编译 Revit 插件。
-
-### 编译 Revit 插件提示找不到 `RevitAPI.dll`
-
-确认已安装 Revit 2019，并检查安装路径。项目默认路径为：
-
-```text
-C:\Program Files\Autodesk\Revit 2019
-```
-
-如果安装在其他目录，请在 MSBuild 中传入：
-
-```powershell
-/p:RevitInstallPath="你的 Revit 2019 安装目录"
-```
-
-### Revit 启动后没有看到插件
-
-请检查：
-
-- `.addin` 文件是否位于 `%ProgramData%\Autodesk\Revit\Addins\2019\`。
-- `.addin` 文件中的 `<Assembly>` 是否为 `RevitGltfExporter.dll` 的绝对路径。
-- `output\RevitGltfExporter.dll` 是否存在。
-- `output\draco_encoder.dll` 是否和插件 DLL 在同一目录。
-
-### 编译 AutoCAD 插件提示找不到 `acdbmgd.dll`
-
-确认已安装 AutoCAD，并检查安装路径。项目会自动查找 AutoCAD 2020-2024 的默认安装目录。
-
-如果安装在其他目录，请在 MSBuild 中传入：
-
-```powershell
-/p:AutoCadInstallPath="你的 AutoCAD 安装目录"
-```
-
-### AutoCAD 启动后没有看到 `EXPORTGLB` 命令
-
-请检查：
-
-- `AutoCadGltfExporter.bundle` 是否整个目录复制到了 AutoCAD Autoloader 目录。
-- `PackageContents.xml` 是否位于 bundle 根目录。
-- `AutoCadGltfExporter.dll` 是否位于 `AutoCadGltfExporter.bundle\Contents\`。
-- 复制完成后是否已重启 AutoCAD。
-
-### AutoCAD 导出 Draco GLB 失败
-
-请确认以下文件和 `AutoCadGltfExporter.dll` 位于同一目录：
-
-```text
-AutoCadGltfExporter.bundle\Contents\draco_encoder.dll
-```
+- [Revit GLB 导出实现](docs/revit-glb-export-implementation.md)
+- [AutoCAD GLB 导出实现](docs/autocad-glb-export-implementation.md)
+- [性能优化说明](docs/performance-optimization.md)
