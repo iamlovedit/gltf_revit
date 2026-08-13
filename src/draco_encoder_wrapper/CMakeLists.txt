@@ -18,7 +18,7 @@ set(DRACO_TRANSCODER_SUPPORTED OFF CACHE BOOL "" FORCE)
 # so the bitstream is compatible with any standard glTF Draco decoder.
 set(DRACO_GLTF_BITSTREAM ON CACHE BOOL "" FORCE)
 
-set(DRACO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../draco-1.5.7")
+set(DRACO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../draco-1.5.7")
 add_subdirectory(${DRACO_ROOT} draco_build EXCLUDE_FROM_ALL)
 
 add_library(draco_encoder_wrapper SHARED
@@ -35,11 +35,11 @@ set_target_properties(draco_encoder_wrapper PROPERTIES
   OUTPUT_NAME "draco_encoder"
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-# Copy the produced DLL into the plugin output folder (../output) so that
+# Copy the produced DLL into the plugin output folder (../../output) so that
 # the Revit plugin finds it next to RevitGltfExporter.dll.
 add_custom_command(TARGET draco_encoder_wrapper POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory
-    "${CMAKE_SOURCE_DIR}/../output"
+    "${CMAKE_SOURCE_DIR}/../../output"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "$<TARGET_FILE:draco_encoder_wrapper>"
-    "${CMAKE_SOURCE_DIR}/../output/")
+    "${CMAKE_SOURCE_DIR}/../../output/")

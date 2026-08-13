@@ -2,21 +2,21 @@
 
 ## Project Structure & Module Organization
 
-- `RevitGltfExporter/` contains the Revit 2019 x64 plug-in; export callbacks and collectors are under `Export/`.
-- `AutoCadGltfExporter/` contains the AutoCAD 2020–2024 plug-in, with bundle metadata under `Bundle/`.
-- `Shared/` holds the common .NET Framework 4.8 GLB schema, builders, options, and Draco interop used by both plug-ins.
-- `draco_encoder_wrapper/` builds the native `draco_encoder.dll`; `draco-1.5.7/` is the pinned Draco source tree.
-- `web-viewer/` is the Vite + React + TypeScript + three.js viewer (`src/viewer/` contains viewer features). `docs/` contains implementation and performance notes; `scripts/` contains installation automation.
+- `src/RevitGltfExporter/` contains the Revit 2019 x64 plug-in; export callbacks and collectors are under `Export/`.
+- `src/AutoCadGltfExporter/` contains the AutoCAD 2020–2024 plug-in, with bundle metadata under `Bundle/`.
+- `src/Shared/` holds the common .NET Framework 4.8 GLB schema, builders, options, and Draco interop used by both plug-ins.
+- `src/draco_encoder_wrapper/` builds the native `draco_encoder.dll`; `draco-1.5.7/` is the pinned Draco source tree.
+- `src/web-viewer/` is the Vite + React + TypeScript + three.js viewer (`src/viewer/` contains viewer features). `docs/` contains implementation and performance notes; `scripts/` contains installation automation.
 
 ## Build, Test, and Development Commands
 
 Run from the repository root in PowerShell (Windows, Visual Studio/MSBuild, CMake, and pnpm 9 are expected):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\draco_encoder_wrapper\build.ps1 -Config Release
-msbuild .\RevitGltfExporter\RevitGltfExporter.sln /m /p:Configuration=Release /p:Platform=x64
-msbuild .\AutoCadGltfExporter\AutoCadGltfExporter.sln /m /p:Configuration=Release /p:Platform=x64
-cd .\web-viewer; pnpm install; pnpm typecheck; pnpm build
+powershell -ExecutionPolicy Bypass -File .\src\draco_encoder_wrapper\build.ps1 -Config Release
+msbuild .\src\RevitGltfExporter\RevitGltfExporter.slnx /m /p:Configuration=Release /p:Platform=x64
+msbuild .\src\AutoCadGltfExporter\AutoCadGltfExporter.slnx /m /p:Configuration=Release /p:Platform=x64
+cd .\src\web-viewer; pnpm install; pnpm typecheck; pnpm build
 ```
 
 Build Draco before either plug-in; outputs are staged in `output/`. Use `pnpm dev` for the viewer at `http://localhost:5173`. `scripts\install-plugins.ps1 -Target Revit|AutoCAD|Both` builds and installs plug-ins (administrator PowerShell may be required).

@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="../Shared/Shared.csproj" Id="a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="RevitGltfExporter/RevitGltfExporter.csproj" Id="8f0b1a8e-2d2d-4a2f-8b34-2c7d3f4a55aa">
+    <Platform Project="x64" />
+  </Project>
+</Solution>

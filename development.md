@@ -19,35 +19,27 @@
 repo/
 ├── business.md                # 原始需求
 ├── development.md             # 本文件
-├── RevitGltfExporter/         # Revit 插件解决方案
-│   ├── RevitGltfExporter.sln
-│   └── RevitGltfExporter/
-│       ├── RevitGltfExporter.csproj
-│       ├── Application.cs            # IExternalApplication，注册 Ribbon
-│       ├── Commands/
-│       │   └── ExportGlbCommand.cs   # IExternalCommand 入口
-│       ├── Export/
-│       │   ├── GlbExportContext.cs   # IExportContext 实现
-│       │   ├── MaterialCollector.cs
-│       │   ├── PropertyCollector.cs
-│       │   └── DracoCompressor.cs
-│       ├── UI/ExportOptionsWindow.xaml
-│       └── Resources/RevitGltfExporter.addin
-└── web-viewer/                # 前端项目
-    ├── package.json
-    ├── vite.config.ts
-    ├── public/
-    │   └── draco/             # draco_decoder.wasm / .js
-    └── src/
-        ├── main.tsx
-        ├── App.tsx
-        ├── viewer/
-        │   ├── Viewer.tsx
-        │   ├── SceneManager.ts
-        │   ├── AsyncGltfLoader.ts
-        │   └── PropertyPanel.tsx
-        └── workers/
-            └── gltfWorker.ts
+├── src/                       # 所有一方源码
+│   ├── RevitGltfExporter/     # Revit 插件解决方案与项目
+│   │   ├── RevitGltfExporter.slnx
+│   │   └── RevitGltfExporter/
+│   │       ├── RevitGltfExporter.csproj
+│   │       ├── Application.cs
+│   │       ├── Commands/       # IExternalCommand 入口
+│   │       ├── Export/         # IExportContext 与数据采集
+│   │       ├── UI/
+│   │       └── Resources/
+│   ├── AutoCadGltfExporter/   # AutoCAD 插件解决方案与项目
+│   ├── Shared/                # 共用 glTF/GLB 与 Draco 互操作
+│   ├── draco_encoder_wrapper/ # 原生 Draco 编码器包装
+│   └── web-viewer/            # Vite + React + TypeScript 前端
+│       ├── package.json
+│       ├── vite.config.ts
+│       └── src/
+├── draco-1.5.7/               # 固定的第三方 Draco 源码
+├── docs/                      # 实现与性能文档
+├── scripts/                   # 安装自动化
+└── specs/                     # 行为规格与验收标准
 ```
 
 ---
@@ -154,8 +146,8 @@ Revit `Material` → glTF `pbrMetallicRoughness`：
 ### 4.1 初始化
 
 ```bash
-pnpm create vite web-viewer --template react-ts
-cd web-viewer
+pnpm create vite src/web-viewer --template react-ts
+cd src/web-viewer
 pnpm add three @types/three
 pnpm add -D vite-plugin-static-copy
 ```

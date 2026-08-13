@@ -20,12 +20,12 @@ Set-StrictMode -Version Latest
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $OutputRoot = Join-Path $RepoRoot "output"
-$RevitProject = Join-Path $RepoRoot "RevitGltfExporter\RevitGltfExporter\RevitGltfExporter.csproj"
-$RevitSolution = Join-Path $RepoRoot "RevitGltfExporter\RevitGltfExporter.sln"
-$RevitAddinTemplate = Join-Path $RepoRoot "RevitGltfExporter\RevitGltfExporter\Resources\RevitGltfExporter.addin"
-$AutoCadProject = Join-Path $RepoRoot "AutoCadGltfExporter\AutoCadGltfExporter\AutoCadGltfExporter.csproj"
-$AutoCadSolution = Join-Path $RepoRoot "AutoCadGltfExporter\AutoCadGltfExporter.sln"
-$DracoBuildScript = Join-Path $RepoRoot "draco_encoder_wrapper\build.ps1"
+$RevitProject = Join-Path $RepoRoot "src\RevitGltfExporter\RevitGltfExporter\RevitGltfExporter.csproj"
+$RevitSolution = Join-Path $RepoRoot "src\RevitGltfExporter\RevitGltfExporter.slnx"
+$RevitAddinTemplate = Join-Path $RepoRoot "src\RevitGltfExporter\RevitGltfExporter\Resources\RevitGltfExporter.addin"
+$AutoCadProject = Join-Path $RepoRoot "src\AutoCadGltfExporter\AutoCadGltfExporter.csproj"
+$AutoCadSolution = Join-Path $RepoRoot "src\AutoCadGltfExporter\AutoCadGltfExporter.slnx"
+$DracoBuildScript = Join-Path $RepoRoot "src\draco_encoder_wrapper\build.ps1"
 
 function Resolve-MSBuild {
     $command = Get-Command "msbuild.exe" -ErrorAction SilentlyContinue

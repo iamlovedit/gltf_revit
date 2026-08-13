@@ -1,0 +1,38 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+      Name="AutoCAD GLB Exporter 2020-2024"
+      Manufacturer="gltf_revit"
+      Version="$(ProductVersion)"
+      UpgradeCode="F9554D70-B82B-442D-93E1-793802BD88C6"
+      Scope="perMachine"
+      Language="1033">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of AutoCAD GLB Exporter is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="AutoCadAutodeskFolder" Name="Autodesk">
+        <Directory Id="ApplicationPluginsFolder" Name="ApplicationPlugins">
+          <Directory Id="AutoCadBundleFolder" Name="AutoCadGltfExporter.bundle">
+            <Directory Id="AutoCadContentsFolder" Name="Contents" />
+          </Directory>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="AutoCAD GLB Exporter 2020-2024" Level="1">
+      <ComponentRef Id="AutoCadBundleManifestComponent" />
+      <ComponentRef Id="AutoCadPluginComponent" />
+    </Feature>
+
+    <Component Id="AutoCadBundleManifestComponent" Directory="AutoCadBundleFolder" Guid="9D5D3B6E-8E21-4360-A4DD-E7D62EDEAD64" Bitness="always64">
+      <File Id="AutoCadBundleManifestFile" Source="$(PayloadDir)\PackageContents.xml" KeyPath="yes" />
+    </Component>
+
+    <Component Id="AutoCadPluginComponent" Directory="AutoCadContentsFolder" Guid="310EF56A-D252-428A-BD8F-F388E777130D" Bitness="always64">
+      <File Id="AutoCadPluginAssembly" Source="$(PayloadDir)\Contents\AutoCadGltfExporter.dll" KeyPath="yes" />
+      <File Id="AutoCadSharedAssembly" Source="$(PayloadDir)\Contents\GltfExporter.Shared.dll" />
+      <File Id="AutoCadNewtonsoftAssembly" Source="$(PayloadDir)\Contents\Newtonsoft.Json.dll" />
+      <File Id="AutoCadDracoAssembly" Source="$(PayloadDir)\Contents\draco_encoder.dll" />
+    </Component>
+  </Package>
+</Wix>

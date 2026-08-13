@@ -1,6 +1,6 @@
 # AutoCAD 导出 GLB 实现文档
 
-本文面向维护导出器的工程师，说明 `AutoCadGltfExporter` 如何把 DWG 图元转换为 glTF 2.0 Binary 文件。核心代码位于 `AutoCadGltfExporter/AutoCadGltfExporter` 和 `Shared`。
+本文面向维护导出器的工程师，说明 `AutoCadGltfExporter` 如何把 DWG 图元转换为 glTF 2.0 Binary 文件。核心代码位于 `src/AutoCadGltfExporter` 和 `src/Shared`。
 
 ## 1. 导出入口
 
@@ -68,7 +68,7 @@ GltfRoot
 
 ### 2.1 JSON 根对象
 
-共享模块 `Shared/GltfSchema.cs` 中的 `GltfRoot` 对应 glTF JSON 根对象。当前 AutoCAD 导出主要写入这些字段：
+共享模块 `src/Shared/GltfSchema.cs` 中的 `GltfRoot` 对应 glTF JSON 根对象。当前 AutoCAD 导出主要写入这些字段：
 
 - `asset`：文件元信息，当前固定为 `version = "2.0"`、`generator = "GltfExporter"`。
 - `scene`：默认场景索引，当前为 `0`。
@@ -487,7 +487,7 @@ roughnessFactor = 0.8
 
 ## 8. GLB 写入机制
 
-共享模块 `Shared/GltfBuilder.cs` 负责组装 glTF 结构和二进制数据。
+共享模块 `src/Shared/GltfBuilder.cs` 负责组装 glTF 结构和二进制数据。
 
 三角面 primitive 的写入方式：
 

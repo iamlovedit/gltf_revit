@@ -54,11 +54,11 @@ AutoCAD 导出的模型会保留图层信息，可以在右侧图层面板中单
 
 | 目录 | 说明 |
 | --- | --- |
-| `RevitGltfExporter` | Revit 2019 导出插件 |
-| `AutoCadGltfExporter` | AutoCAD 2020–2024 导出插件 |
-| `Shared` | 两个导出器共用的 glTF/GLB 构建代码 |
-| `draco_encoder_wrapper` | Draco 原生编码 DLL |
-| `web-viewer` | React + three.js Web 查看器 |
+| `src/RevitGltfExporter` | Revit 2019 导出插件 |
+| `src/AutoCadGltfExporter` | AutoCAD 2020–2024 导出插件 |
+| `src/Shared` | 两个导出器共用的 glTF/GLB 构建代码 |
+| `src/draco_encoder_wrapper` | Draco 原生编码 DLL |
+| `src/web-viewer` | React + three.js Web 查看器 |
 
 ## 🛠️ 源码编译
 
@@ -80,17 +80,17 @@ AutoCAD 导出的模型会保留图层信息，可以在右侧图层面板中单
 
 ```powershell
 New-Item -ItemType Directory -Path .\output -Force | Out-Null
-powershell -ExecutionPolicy Bypass -File .\draco_encoder_wrapper\build.ps1 -Config Release
+powershell -ExecutionPolicy Bypass -File .\src\draco_encoder_wrapper\build.ps1 -Config Release
 ```
 
 ✅ 产物将复制到 `output\draco_encoder.dll`。
 
 ### 2️⃣ 编译 Revit 插件
 
-在 Visual Studio 中打开 `RevitGltfExporter\RevitGltfExporter.sln`，选择 `Release | x64` 后构建；也可以在 Developer PowerShell 中执行：
+在 Visual Studio 中打开 `src\RevitGltfExporter\RevitGltfExporter.slnx`，选择 `Release | x64` 后构建；也可以在 Developer PowerShell 中执行：
 
 ```powershell
-msbuild .\RevitGltfExporter\RevitGltfExporter.sln /m /p:Configuration=Release /p:Platform=x64
+msbuild .\src\RevitGltfExporter\RevitGltfExporter.slnx /m /p:Configuration=Release /p:Platform=x64
 ```
 
 Revit 安装在非默认目录时，增加：
@@ -103,10 +103,10 @@ Revit 安装在非默认目录时，增加：
 
 ### 3️⃣ 编译 AutoCAD 插件
 
-在 Visual Studio 中打开 `AutoCadGltfExporter\AutoCadGltfExporter.sln`，选择 `Release | x64` 后构建；也可以执行：
+在 Visual Studio 中打开 `src\AutoCadGltfExporter\AutoCadGltfExporter.slnx`，选择 `Release | x64` 后构建；也可以执行：
 
 ```powershell
-msbuild .\AutoCadGltfExporter\AutoCadGltfExporter.sln /m /p:Configuration=Release /p:Platform=x64
+msbuild .\src\AutoCadGltfExporter\AutoCadGltfExporter.slnx /m /p:Configuration=Release /p:Platform=x64
 ```
 
 项目会自动查找 AutoCAD 2020–2024。安装在其他目录时，增加：
@@ -125,12 +125,27 @@ output\AutoCadGltfExporter.bundle\
 ### 4️⃣ 编译 Web 查看器
 
 ```powershell
-cd .\web-viewer
+cd .\src\web-viewer
 pnpm install
 pnpm build
 ```
 
-✅ 生产构建输出到 `web-viewer\dist`。本地开发可运行 `pnpm dev`，默认访问 `http://localhost:5173`。
+✅ 生产构建输出到 `src\web-viewer\dist`。本地开发可运行 `pnpm dev`，默认访问 `http://localhost:5173`。
+
+## 🚢 发布安装包
+
+推送 `v主版本.次版本.修订号` 格式的 tag（例如 `v1.2.3`）后，GitHub Actions 会构建 Draco、Revit 2019 插件和 AutoCAD 2020–2024 插件，并自动创建 GitHub Release。Release 包含两个 x64 MSI 安装包和 `SHA256SUMS.txt`；Web Viewer 不参与此发布流程。
+
+```powershell
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+本地可使用相同脚本复现安装包构建，产物位于 `release\`：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build-release.ps1 -Version v1.2.3
+```
 
 ## 📦 安装插件
 
@@ -190,7 +205,7 @@ Autodesk 产品不在默认目录时，可通过 `-RevitInstallPath` 或 `-AutoC
 启动开发服务器：
 
 ```powershell
-cd .\web-viewer
+cd .\src\web-viewer
 pnpm install
 pnpm dev
 ```

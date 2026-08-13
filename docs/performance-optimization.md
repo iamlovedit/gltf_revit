@@ -192,7 +192,7 @@ Meshopt 的 wasm 只有 50KB，同步加载也没压力。解码在主线程跑�
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('/draco/');           // 放 web-viewer/public/draco/
+dracoLoader.setDecoderPath('/draco/');           // 放 src/web-viewer/public/draco/
 dracoLoader.setDecoderConfig({ type: 'js' });    // 或 'wasm'
 dracoLoader.preload();                            // 提前加载 wasm
 
@@ -216,7 +216,7 @@ loader.setKTX2Loader(ktx2Loader);
 
 ### 2.7 Revit 插件端的 Draco 集成（如果选 Draco 路线）
 
-项目已包含 `draco_encoder_wrapper` 和 `draco-1.5.7`，说明导出端直接做压缩是备选路径。关键考虑：
+项目已包含 `src/draco_encoder_wrapper` 和 `draco-1.5.7`，说明导出端直接做压缩是备选路径。关键考虑：
 
 - **编码耗时**：Draco 编码比解码慢得多，10 万构件的模型编码可能几分钟。建议**导出时不压缩，走 gltf-transform 后处理**。
 - **参数权衡**：`--cl 7 --qp 14 --qn 10`（压缩等级 7 / position 量化 14 bit / normal 10 bit）是 BIM 场景的合理起点。
@@ -487,7 +487,7 @@ BIM 场景建议**不重复**，按构件 elementId 归属决定归哪个 tile�
 
 1. **tileset.json 的 transform 链路**：3D Tiles 有 tile 局部变换 + 父 tile 变换 + root transform 三层嵌套，算错了整个模型会偏移或缩放错。用工具生成、不要手改。
 
-2. **web-viewer 的 Worker 加载上限**：浏览器限制同源并发请求（Chrome 6 个）。大量 tile 并发加载会排队。用 HTTP/2 或 HTTP/3 可以突破。
+2. **src/web-viewer 的 Worker 加载上限**：浏览器限制同源并发请求（Chrome 6 个）。大量 tile 并发加载会排队。用 HTTP/2 或 HTTP/3 可以突破。
 
 3. **CDN 缓存 tile 要不要带版本号**：模型更新后旧 tile 缓存不失效会花乱。manifest.json 里每个 tile 带 hash，URL 为 `tile-abc123.glb`，改了就换 URL。
 

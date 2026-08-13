@@ -19,6 +19,7 @@
     <AutoCadInstallPath Condition="'$(AutoCadInstallPath)' == '' and Exists('C:\Program Files\Autodesk\AutoCAD 2021\acdbmgd.dll')">C:\Program Files\Autodesk\AutoCAD 2021</AutoCadInstallPath>
     <AutoCadInstallPath Condition="'$(AutoCadInstallPath)' == '' and Exists('C:\Program Files\Autodesk\AutoCAD 2020\acdbmgd.dll')">C:\Program Files\Autodesk\AutoCAD 2020</AutoCadInstallPath>
     <AutoCadInstallPath Condition="'$(AutoCadInstallPath)' == ''">C:\Program Files\Autodesk\AutoCAD 2022</AutoCadInstallPath>
+    <UseAutodeskNuGetReferences Condition="'$(UseAutodeskNuGetReferences)' == ''">false</UseAutodeskNuGetReferences>
     <BundleStagingDir>..\..\output\AutoCadGltfExporter.bundle</BundleStagingDir>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -41,7 +42,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(UseAutodeskNuGetReferences)' != 'true'">
     <Reference Include="accoremgd">
       <HintPath>$(AutoCadInstallPath)\accoremgd.dll</HintPath>
       <Private>False</Private>
@@ -54,6 +55,12 @@
       <HintPath>$(AutoCadInstallPath)\acmgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseAutodeskNuGetReferences)' == 'true'">
+    <!-- Autodesk's AutoCAD 2020 reference package targets the oldest supported host. -->
+    <PackageReference Include="AutoCAD.NET" Version="23.1.0" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
@@ -89,7 +96,7 @@
     <BundleSource Include="Bundle\PackageContents.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Shared\Shared.csproj">
+    <ProjectReference Include="..\Shared\Shared.csproj">
       <Project>{A1B2C3D4-E5F6-4789-A0B1-C2D3E4F5A6B7}</Project>
       <Name>Shared</Name>
     </ProjectReference>

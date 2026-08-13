@@ -6,11 +6,11 @@
 
 ## 模块边界
 
-- `RevitGltfExporter`：只负责 Revit 视图数据采集与 Revit 属性/材质映射。
-- `AutoCadGltfExporter`：只负责 DWG ModelSpace 实体、图层、块和 CAD 属性采集。
-- `Shared`：负责与宿主无关的 glTF/GLB 结构、二进制 buffer、材质和 Draco 调用。
-- `draco_encoder_wrapper`：构建 `draco_encoder.dll`，不改变导出业务语义。
-- `web-viewer`：只消费符合 `glb-contract.md` 的 GLB，不读取 Revit/AutoCAD API。
+- `src/RevitGltfExporter`：只负责 Revit 视图数据采集与 Revit 属性/材质映射。
+- `src/AutoCadGltfExporter`：只负责 DWG ModelSpace 实体、图层、块和 CAD 属性采集。
+- `src/Shared`：负责与宿主无关的 glTF/GLB 结构、二进制 buffer、材质和 Draco 调用。
+- `src/draco_encoder_wrapper`：构建 `draco_encoder.dll`，不改变导出业务语义。
+- `src/web-viewer`：只消费符合 `glb-contract.md` 的 GLB，不读取 Revit/AutoCAD API。
 
 ## 共通验收
 

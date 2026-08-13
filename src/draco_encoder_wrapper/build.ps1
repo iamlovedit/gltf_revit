@@ -18,7 +18,7 @@ cmake --build build --config $Config
 if ($LASTEXITCODE -ne 0) { throw "cmake build failed" }
 
 $dll = Join-Path $PSScriptRoot "build\bin\$Config\draco_encoder.dll"
-$outDir = Resolve-Path (Join-Path $PSScriptRoot "..\output")
+$outDir = Resolve-Path (Join-Path $PSScriptRoot "..\..\output")
 if (-not (Test-Path $dll)) {
     # Fall back to default MSVC per-config dir if RUNTIME_OUTPUT_DIRECTORY was ignored.
     $dll = Join-Path $PSScriptRoot "build\$Config\draco_encoder.dll"
