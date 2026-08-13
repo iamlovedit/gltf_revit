@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace GltfExporter.Shared
 {
-    // P/Invoke bindings to draco_encoder.dll (built from draco-1.5.7 via
+    // P/Invoke bindings to draco_encoder.dll (built from pinned Draco 1.5.7 via
     // ../draco_encoder_wrapper/build.ps1). The DLL is expected to live next
     // to the consuming assembly (Revit/AutoCAD plugin dll).
     public static class DracoNative

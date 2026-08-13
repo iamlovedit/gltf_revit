@@ -1,6 +1,6 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package
-      Name="Revit GLB Exporter 2019"
+      Name="Revit GLB Exporter $(RevitVersion)"
       Manufacturer="gltf_revit"
       Version="$(ProductVersion)"
       UpgradeCode="A73C6488-1EA0-49AE-9A5E-A0F12E04B68B"
@@ -13,7 +13,7 @@
       <Directory Id="RevitAutodeskFolder" Name="Autodesk">
         <Directory Id="RevitHostFolder" Name="Revit">
           <Directory Id="RevitAddinsFolder" Name="Addins">
-            <Directory Id="Revit2019Folder" Name="2019">
+            <Directory Id="RevitVersionFolder" Name="$(RevitVersion)">
               <Directory Id="RevitPluginFolder" Name="RevitGltfExporter" />
             </Directory>
           </Directory>
@@ -21,20 +21,21 @@
       </Directory>
     </StandardDirectory>
 
-    <Feature Id="MainFeature" Title="Revit GLB Exporter 2019" Level="1">
+    <Feature Id="MainFeature" Title="Revit GLB Exporter $(RevitVersion)" Level="1">
       <ComponentRef Id="RevitManifestComponent" />
       <ComponentRef Id="RevitPluginComponent" />
     </Feature>
 
-    <Component Id="RevitManifestComponent" Directory="Revit2019Folder" Guid="AD3D19A5-DDA7-4A5C-8B23-95C4C5A87170" Bitness="always64">
-      <File Id="RevitManifestFile" Source="RevitGltfExporter.addin" KeyPath="yes" />
+    <Component Id="RevitManifestComponent" Directory="RevitVersionFolder" Guid="AD3D19A5-DDA7-4A5C-8B23-95C4C5A87170" Bitness="always64">
+      <File Id="RevitManifestFile" Source="$(PayloadDir)\RevitGltfExporter.addin" KeyPath="yes" />
     </Component>
 
     <Component Id="RevitPluginComponent" Directory="RevitPluginFolder" Guid="CB70E736-9D39-43C0-8EAA-C08484CFDD58" Bitness="always64">
-      <File Id="RevitPluginAssembly" Source="$(PayloadDir)\RevitGltfExporter.dll" KeyPath="yes" />
+      <File Id="RevitPluginAssembly" Source="$(PayloadDir)\RevitGltfExporter.$(RevitVersion).dll" KeyPath="yes" />
       <File Id="RevitSharedAssembly" Source="$(PayloadDir)\GltfExporter.Shared.dll" />
       <File Id="RevitNewtonsoftAssembly" Source="$(PayloadDir)\Newtonsoft.Json.dll" />
       <File Id="RevitDracoAssembly" Source="$(PayloadDir)\draco_encoder.dll" />
+      <File Id="RevitDracoLicense" Source="$(ThirdPartyNoticesDir)\Draco-LICENSE.txt" />
     </Component>
   </Package>
 </Wix>

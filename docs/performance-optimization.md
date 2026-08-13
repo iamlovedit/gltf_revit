@@ -216,7 +216,7 @@ loader.setKTX2Loader(ktx2Loader);
 
 ### 2.7 Revit 插件端的 Draco 集成（如果选 Draco 路线）
 
-项目已包含 `src/draco_encoder_wrapper` 和 `draco-1.5.7`，说明导出端直接做压缩是备选路径。关键考虑：
+项目通过 `src/draco_encoder_wrapper` 构建固定版本的 Draco（源码由 CMake 下载或通过本地路径提供），说明导出端直接做压缩是备选路径。关键考虑：
 
 - **编码耗时**：Draco 编码比解码慢得多，10 万构件的模型编码可能几分钟。建议**导出时不压缩，走 gltf-transform 后处理**。
 - **参数权衡**：`--cl 7 --qp 14 --qn 10`（压缩等级 7 / position 量化 14 bit / normal 10 bit）是 BIM 场景的合理起点。

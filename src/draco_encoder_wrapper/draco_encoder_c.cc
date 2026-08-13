@@ -1,4 +1,3 @@
-#define DRACO_ENCODER_EXPORTS
 #include "draco_encoder_c.h"
 
 #include <cstdlib>

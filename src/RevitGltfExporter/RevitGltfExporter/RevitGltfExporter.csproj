@@ -4,39 +4,83 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    <RevitVersion Condition=" '$(RevitVersion)' == '' ">2019</RevitVersion>
+    <RevitInstallPath Condition=" '$(RevitInstallPath)' == '' ">C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallPath>
     <ProjectGuid>{8F0B1A8E-2D2D-4A2F-8B34-2C7D3F4A55AA}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>RevitGltfExporter</RootNamespace>
-    <AssemblyName>RevitGltfExporter</AssemblyName>
+    <AssemblyName>RevitGltfExporter.$(RevitVersion)</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <UseWpf>true</UseWpf>
     <PlatformTarget>x64</PlatformTarget>
-    <RevitInstallPath Condition="'$(RevitInstallPath)' == ''">C:\Program Files\Autodesk\Revit 2019</RevitInstallPath>
-    <UseAutodeskNuGetReferences Condition="'$(UseAutodeskNuGetReferences)' == ''">false</UseAutodeskNuGetReferences>
+    <OutputPath>..\..\..\output\Revit$(RevitVersion)\</OutputPath>
+    <UseLocalRevitReferences Condition="'$(UseLocalRevitReferences)' == ''">false</UseLocalRevitReferences>
+    <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\Revit$(RevitVersion)\</IntermediateOutputPath>
     <TargetFrameworkProfile />
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+
+  <PropertyGroup Condition="'$(RevitVersion)' == '2019'">
+    <VersionDefine>REVIT2019</VersionDefine>
+    <ExpectedRevitApiVersion>19.0.0.0</ExpectedRevitApiVersion>
+    <RevitApiPackageVersion>2019.0.1</RevitApiPackageVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2020'">
+    <VersionDefine>REVIT2020</VersionDefine>
+    <ExpectedRevitApiVersion>20.0.0.0</ExpectedRevitApiVersion>
+    <RevitApiPackageVersion>2020.0.1</RevitApiPackageVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2021'">
+    <VersionDefine>REVIT2021;REVIT2021_OR_LATER</VersionDefine>
+    <ExpectedRevitApiVersion>21.0.0.0</ExpectedRevitApiVersion>
+    <RevitApiPackageVersion>2021.1.9</RevitApiPackageVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2022'">
+    <VersionDefine>REVIT2022;REVIT2021_OR_LATER</VersionDefine>
+    <ExpectedRevitApiVersion>22.0.0.0</ExpectedRevitApiVersion>
+    <RevitApiPackageVersion>2022.1.0</RevitApiPackageVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2023'">
+    <VersionDefine>REVIT2023;REVIT2021_OR_LATER</VersionDefine>
+    <ExpectedRevitApiVersion>23.0.0.0</ExpectedRevitApiVersion>
+    <RevitApiPackageVersion>2023.0.0</RevitApiPackageVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2024'">
+    <VersionDefine>REVIT2024;REVIT2021_OR_LATER;REVIT2024_OR_GREATER</VersionDefine>
+    <ExpectedRevitApiVersion>24.0.0.0</ExpectedRevitApiVersion>
+    <RevitApiPackageVersion>2024.2.0</RevitApiPackageVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\output\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;$(VersionDefine)</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <StartAction>Program</StartAction>
     <StartProgram>$(RevitInstallPath)\Revit.exe</StartProgram>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\output\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;$(VersionDefine)</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <ItemGroup Condition="'$(UseAutodeskNuGetReferences)' != 'true'">
+
+  <Target Name="ValidateRevitInputs" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(RevitVersion)' != '2019' and '$(RevitVersion)' != '2020' and '$(RevitVersion)' != '2021' and '$(RevitVersion)' != '2022' and '$(RevitVersion)' != '2023' and '$(RevitVersion)' != '2024'" Text="Unsupported RevitVersion '$(RevitVersion)'. Supported versions are 2019 through 2024." />
+    <Error Condition="'$(UseLocalRevitReferences)' == 'true' and !Exists('$(RevitInstallPath)\RevitAPI.dll')" Text="Revit $(RevitVersion) API was not found at '$(RevitInstallPath)'. Set /p:RevitInstallPath to the matching installation directory, or use the default NuGet API package." />
+    <Error Condition="'$(UseLocalRevitReferences)' == 'true' and !Exists('$(RevitInstallPath)\RevitAPIUI.dll')" Text="Revit $(RevitVersion) UI API was not found at '$(RevitInstallPath)'. Set /p:RevitInstallPath to the matching installation directory, or use the default NuGet API package." />
+    <GetAssemblyIdentity AssemblyFiles="$(RevitInstallPath)\RevitAPI.dll" Condition="'$(UseLocalRevitReferences)' == 'true' and Exists('$(RevitInstallPath)\RevitAPI.dll')">
+      <Output TaskParameter="Assemblies" ItemName="_RevitApiAssembly" />
+    </GetAssemblyIdentity>
+    <Error Condition="'$(UseLocalRevitReferences)' == 'true' and '@(_RevitApiAssembly->'%(Version)')' != '$(ExpectedRevitApiVersion)'" Text="RevitVersion $(RevitVersion) requires RevitAPI $(ExpectedRevitApiVersion), but '$(RevitInstallPath)' contains version @(_RevitApiAssembly->'%(Version)')." />
+  </Target>
+
+  <ItemGroup Condition="'$(UseLocalRevitReferences)' == 'true'">
     <Reference Include="RevitAPI">
       <HintPath>$(RevitInstallPath)\RevitAPI.dll</HintPath>
       <Private>False</Private>
@@ -46,9 +90,8 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition="'$(UseAutodeskNuGetReferences)' == 'true'">
-    <!-- Metadata-only reference assemblies allow CI builds without installing Revit. -->
-    <PackageReference Include="Autodesk.Revit.Sdk.Refs.2019" Version="1.1.1" ExcludeAssets="runtime" PrivateAssets="all" />
+  <ItemGroup Condition="'$(UseLocalRevitReferences)' != 'true'">
+    <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="$(RevitApiPackageVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="PresentationCore" />
@@ -63,9 +106,11 @@
   <ItemGroup>
     <Compile Include="Application.cs" />
     <Compile Include="Commands\ExportGlbCommand.cs" />
-    <Compile Include="Export\GlbExportContext.cs" />
-    <Compile Include="Export\MaterialCollector.cs" />
-    <Compile Include="Export\PropertyCollector.cs" />
+    <Compile Include="..\Adapters\RevitExportContext.cs" Link="Adapters\RevitExportContext.cs" />
+    <Compile Include="..\Adapters\RevitApiVersion.cs" Link="Adapters\RevitApiVersion.cs" />
+    <Compile Include="..\Adapters\RevitPropertyCollector.cs" Link="Adapters\RevitPropertyCollector.cs" />
+    <Compile Include="..\Core\RevitExportModels.cs" Link="Core\RevitExportModels.cs" />
+    <Compile Include="..\Core\RevitExportWriter.cs" Link="Core\RevitExportWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\ExportOptionsWindow.xaml.cs">
       <DependentUpon>ExportOptionsWindow.xaml</DependentUpon>
@@ -77,8 +122,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\RevitGltfExporter.addin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -88,9 +131,14 @@
       <Project>{A1B2C3D4-E5F6-4789-A0B1-C2D3E4F5A6B7}</Project>
       <Name>Shared</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="CopyRevitAddinManifest" AfterTargets="Build">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Resources\RevitGltfExporter.addin" DestinationFiles="$(TargetDir)RevitGltfExporter.addin" />
+  </Target>
+  <Target Name="PatchRevitAddinManifest" AfterTargets="CopyRevitAddinManifest">
+    <XmlPoke XmlInputPath="$(TargetDir)RevitGltfExporter.addin" Query="/RevitAddIns/AddIn/Assembly" Value="$(TargetPath)" />
+    <XmlPoke XmlInputPath="$(TargetDir)RevitGltfExporter.addin" Query="/RevitAddIns/AddIn/Name" Value="RevitGltfExporter $(RevitVersion)" />
+  </Target>
 </Project>

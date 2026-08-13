@@ -1,6 +1,13 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$Version
+    [string]$Version,
+
+    [ValidateSet(2019, 2020, 2021, 2022, 2023, 2024)]
+    [int]$RevitVersion = 2019,
+
+    [string]$RevitInstallPath = "",
+
+    [switch]$UseLocalRevitReferences
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,6 +34,7 @@ $autoCadProject = Join-Path $repoRoot "src\AutoCadGltfExporter\AutoCadGltfExport
 $revitInstaller = Join-Path $repoRoot "installers\Revit\RevitInstaller.wixproj"
 $autoCadInstaller = Join-Path $repoRoot "installers\AutoCAD\AutoCadInstaller.wixproj"
 $autoCadBundle = Join-Path $outputRoot "AutoCadGltfExporter.bundle"
+$revitOutput = Join-Path $outputRoot ("Revit{0}" -f $RevitVersion)
 
 function Resolve-MSBuild {
     $command = Get-Command "msbuild.exe" -ErrorAction SilentlyContinue
@@ -104,21 +112,35 @@ $commonBuildArguments = @(
     "/m",
     "/p:Configuration=Release",
     "/p:Platform=x64",
-    "/p:DracoEncoderConfiguration=Release",
-    "/p:UseAutodeskNuGetReferences=true"
+    "/p:DracoEncoderConfiguration=Release"
 )
+$revitBuildArguments = @($commonBuildArguments + "/p:RevitVersion=$RevitVersion")
+if ($UseLocalRevitReferences) {
+    $revitBuildArguments += "/p:UseLocalRevitReferences=true"
+    if ([string]::IsNullOrWhiteSpace($RevitInstallPath)) { throw "-RevitInstallPath is required with -UseLocalRevitReferences." }
+    $revitBuildArguments += "/p:RevitInstallPath=$RevitInstallPath"
+}
 
-Write-Host "Building Revit 2019 plug-in..."
-Invoke-Checked -FilePath $msbuild -Arguments (@($revitProject) + $commonBuildArguments) -FailureMessage "Revit plug-in build failed."
+Write-Host "Building Revit $RevitVersion plug-in..."
+Invoke-Checked -FilePath $msbuild -Arguments (@($revitProject) + $revitBuildArguments) -FailureMessage "Revit plug-in build failed."
+
+$revitAddin = Join-Path $revitOutput "RevitGltfExporter.addin"
+Assert-FileExists $revitAddin
+[xml]$revitAddinXml = Get-Content -LiteralPath $revitAddin
+$revitAssemblyNode = $revitAddinXml.SelectSingleNode("//Assembly")
+if ($null -eq $revitAssemblyNode) { throw "Revit add-in manifest does not contain an Assembly element." }
+$revitAssemblyNode.InnerText = "RevitGltfExporter\RevitGltfExporter.$RevitVersion.dll"
+$revitAddinXml.Save($revitAddin)
 
 Write-Host "Building AutoCAD 2020-2024 plug-in..."
-Invoke-Checked -FilePath $msbuild -Arguments (@($autoCadProject) + $commonBuildArguments) -FailureMessage "AutoCAD plug-in build failed."
+$autoCadBuildArguments = @($commonBuildArguments + "/p:UseAutodeskNuGetReferences=true")
+Invoke-Checked -FilePath $msbuild -Arguments (@($autoCadProject) + $autoCadBuildArguments) -FailureMessage "AutoCAD plug-in build failed."
 
 $requiredPluginFiles = @(
-    (Join-Path $outputRoot "RevitGltfExporter.dll"),
-    (Join-Path $outputRoot "GltfExporter.Shared.dll"),
-    (Join-Path $outputRoot "Newtonsoft.Json.dll"),
-    (Join-Path $outputRoot "draco_encoder.dll"),
+    (Join-Path $revitOutput ("RevitGltfExporter.{0}.dll" -f $RevitVersion)),
+    (Join-Path $revitOutput "GltfExporter.Shared.dll"),
+    (Join-Path $revitOutput "Newtonsoft.Json.dll"),
+    (Join-Path $revitOutput "draco_encoder.dll"),
     (Join-Path $autoCadBundle "PackageContents.xml"),
     (Join-Path $autoCadBundle "Contents\AutoCadGltfExporter.dll"),
     (Join-Path $autoCadBundle "Contents\GltfExporter.Shared.dll"),
@@ -147,14 +169,15 @@ $installerProperties = @(
     "-c", "Release",
     "--nologo",
     "-p:ProductVersion=$productVersion",
-    "-p:OutputPath=$releaseRoot"
+    "-p:OutputPath=$releaseRoot",
+    "-p:RevitVersion=$RevitVersion"
 )
 
 Write-Host "Building Revit MSI..."
 Invoke-Checked -FilePath $dotnet -Arguments (@(
     "build", $revitInstaller
 ) + $installerProperties + @(
-    "-p:PayloadDir=$outputRoot"
+    "-p:PayloadDir=$revitOutput"
 )) -FailureMessage "Revit MSI build failed."
 
 Write-Host "Building AutoCAD MSI..."

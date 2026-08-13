@@ -8,9 +8,13 @@ param(
     [ValidateSet("Revit", "AutoCAD", "Both")]
     [string]$Target = "Both",
 
-    [int]$RevitYear = 2019,
+    [int[]]$RevitYears = @(2019),
 
     [string]$RevitInstallPath = "",
+
+    [string[]]$RevitInstallPaths = @(),
+
+    [switch]$UseLocalRevitReferences,
 
     [string]$AutoCadInstallPath = ""
 )
@@ -21,8 +25,6 @@ Set-StrictMode -Version Latest
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $OutputRoot = Join-Path $RepoRoot "output"
 $RevitProject = Join-Path $RepoRoot "src\RevitGltfExporter\RevitGltfExporter\RevitGltfExporter.csproj"
-$RevitSolution = Join-Path $RepoRoot "src\RevitGltfExporter\RevitGltfExporter.slnx"
-$RevitAddinTemplate = Join-Path $RepoRoot "src\RevitGltfExporter\RevitGltfExporter\Resources\RevitGltfExporter.addin"
 $AutoCadProject = Join-Path $RepoRoot "src\AutoCadGltfExporter\AutoCadGltfExporter.csproj"
 $AutoCadSolution = Join-Path $RepoRoot "src\AutoCadGltfExporter\AutoCadGltfExporter.slnx"
 $DracoBuildScript = Join-Path $RepoRoot "src\draco_encoder_wrapper\build.ps1"
@@ -182,13 +184,8 @@ function Assert-DirectoryExists {
 }
 
 function Get-RevitOutputDir {
-    $rawOutputPath = Get-ProjectProperty -ProjectPath $RevitProject -Name "OutputPath" -Configuration $Configuration -Platform $Platform -PreferConfigurationGroup
-    $expanded = Expand-MSBuildValue -Value $rawOutputPath -Properties @{
-        Configuration = $Configuration
-        Platform = $Platform
-    }
-
-    return Resolve-ProjectPath -ProjectPath $RevitProject -Path $expanded
+    param([Parameter(Mandatory = $true)][int]$Year)
+    return Join-Path $OutputRoot ("Revit{0}" -f $Year)
 }
 
 function Get-AutoCadBundleDir {
@@ -204,25 +201,31 @@ function Get-AutoCadBundleDir {
 }
 
 function Install-RevitPlugin {
-    $revitOutputDir = Get-RevitOutputDir
-    $revitDll = Join-Path $revitOutputDir "RevitGltfExporter.dll"
+    param(
+        [Parameter(Mandatory = $true)][int]$Year,
+        [Parameter(Mandatory = $true)][string]$HostPath
+    )
+    Assert-DirectoryExists $HostPath
+    $revitOutputDir = Get-RevitOutputDir -Year $Year
+    $revitDll = Join-Path $revitOutputDir ("RevitGltfExporter.{0}.dll" -f $Year)
 
     Assert-FileExists $revitDll
     Assert-FileExists (Join-Path $revitOutputDir "GltfExporter.Shared.dll")
     Assert-FileExists (Join-Path $revitOutputDir "Newtonsoft.Json.dll")
     Assert-FileExists (Join-Path $revitOutputDir "draco_encoder.dll")
-    Assert-FileExists $RevitAddinTemplate
+    $addinTemplate = Join-Path $revitOutputDir "RevitGltfExporter.addin"
+    Assert-FileExists $addinTemplate
 
-    $installDir = Join-Path $env:ProgramData "Autodesk\Revit\Addins\$RevitYear"
-    $targetAddin = Join-Path $installDir "RevitGltfExporter.addin"
+    $installDir = Join-Path $env:AppData ("Autodesk\Revit\Addins\{0}" -f $Year)
+    $targetAddin = Join-Path $installDir ("RevitGltfExporter.{0}.addin" -f $Year)
 
     Write-Host "Installing Revit add-in manifest to $targetAddin..."
     New-Item -ItemType Directory -Path $installDir -Force | Out-Null
 
-    [xml]$addinXml = Get-Content -LiteralPath $RevitAddinTemplate
+    [xml]$addinXml = Get-Content -LiteralPath $addinTemplate
     $assemblyNode = $addinXml.SelectSingleNode("//Assembly")
     if ($null -eq $assemblyNode) {
-        throw "Assembly element was not found in '$RevitAddinTemplate'."
+        throw "Assembly element was not found in '$addinTemplate'."
     }
 
     $assemblyNode.InnerText = (Resolve-Path $revitDll).Path
@@ -246,6 +249,23 @@ function Install-RevitPlugin {
     if ($null -eq $installedAssembly -or $installedAssembly.InnerText -ne (Resolve-Path $revitDll).Path) {
         throw "Installed Revit add-in manifest does not point to '$revitDll'."
     }
+}
+
+function Resolve-RevitInstallPath {
+    param([Parameter(Mandatory = $true)][int]$Index, [Parameter(Mandatory = $true)][int]$Year)
+    if ($RevitInstallPaths.Count -gt 0) {
+        if ($RevitInstallPaths.Count -ne $RevitYears.Count) {
+            throw "RevitInstallPaths must contain one path per RevitYears entry."
+        }
+        return $RevitInstallPaths[$Index]
+    }
+    if (-not [string]::IsNullOrWhiteSpace($RevitInstallPath)) {
+        if ($RevitYears.Count -ne 1) {
+            throw "Use -RevitInstallPaths with one path per version when building multiple Revit versions."
+        }
+        return $RevitInstallPath
+    }
+    return "C:\Program Files\Autodesk\Revit $Year"
 }
 
 function Install-AutoCadPlugin {
@@ -287,13 +307,22 @@ try {
     $msbuild = Resolve-MSBuild
 
     if ($Target -eq "Revit" -or $Target -eq "Both") {
-        $properties = @{}
-        if (-not [string]::IsNullOrWhiteSpace($RevitInstallPath)) {
-            $properties["RevitInstallPath"] = $RevitInstallPath
+        if (-not $UseLocalRevitReferences -and (-not [string]::IsNullOrWhiteSpace($RevitInstallPath) -or $RevitInstallPaths.Count -gt 0)) {
+            throw "RevitInstallPath/RevitInstallPaths require -UseLocalRevitReferences. The default build uses Revit_All_Main_Versions_API_x64."
         }
-
-        Build-Solution -MSBuildPath $msbuild -SolutionPath $RevitSolution -AdditionalProperties $properties
-        Install-RevitPlugin
+        for ($index = 0; $index -lt $RevitYears.Count; $index++) {
+            $year = $RevitYears[$index]
+            if ($year -lt 2019 -or $year -gt 2024) { throw "Supported Revit years are 2019 through 2024. Invalid value: $year" }
+            Assert-FileExists $RevitProject
+            $hostPath = Resolve-RevitInstallPath -Index $index -Year $year
+            $properties = @{ RevitVersion = $year }
+            if ($UseLocalRevitReferences) {
+                $properties["UseLocalRevitReferences"] = "true"
+                $properties["RevitInstallPath"] = $hostPath
+            }
+            Build-Solution -MSBuildPath $msbuild -SolutionPath $RevitProject -AdditionalProperties $properties
+            Install-RevitPlugin -Year $year -HostPath $hostPath
+        }
     }
 
     if ($Target -eq "AutoCAD" -or $Target -eq "Both") {

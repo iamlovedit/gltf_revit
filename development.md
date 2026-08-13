@@ -36,11 +36,12 @@ repo/
 │       ├── package.json
 │       ├── vite.config.ts
 │       └── src/
-├── draco-1.5.7/               # 固定的第三方 Draco 源码
 ├── docs/                      # 实现与性能文档
 ├── scripts/                   # 安装自动化
 └── specs/                     # 行为规格与验收标准
 ```
+
+`draco_encoder_wrapper` 通过 CMake `FetchContent` 获取固定版本及 SHA256 的 Draco 源码，不在仓库中保存第三方源码。离线构建可向 `build.ps1` 传入 `-DracoSourceDir`。
 
 ---
 
@@ -48,12 +49,10 @@ repo/
 
 ### 3.1 环境与依赖
 
-- **Revit 版本**：2019
+- **Revit 版本**：2019–2024（由 `RevitVersion` 参数选择）
 - **.NET Framework**：`4.7`（Revit 2019 的运行时）
 - **目标平台**：`x64`
-- **关键引用**（Revit 安装目录，属性 `Copy Local=false`）：
-  - `RevitAPI.dll`
-  - `RevitAPIUI.dll`
+- **关键引用**：默认使用 `Revit_All_Main_Versions_API_x64` NuGet 包中与 `RevitVersion` 对应的 `RevitAPI.dll` 和 `RevitAPIUI.dll`，并设置为不复制到输出目录；可选使用本机 Revit 安装目录做 API 编译校验。
 - **NuGet**：
   - `SharpGLTF.Toolkit`（推荐）或 `glTF2Loader` —— 构建 glTF/GLB 结构
   - `Newtonsoft.Json` —— 属性序列化
@@ -61,7 +60,7 @@ repo/
 
 ### 3.2 注册与加载
 
-- `.addin` 文件放到 `%ProgramData%\Autodesk\Revit\Addins\2019\`
+- `.addin` 文件放到 `%AppData%\Autodesk\Revit\Addins\<RevitVersion>\`
 - `Application : IExternalApplication` 在 `OnStartup` 中创建 Ribbon 面板与按钮，按钮 `PushButtonData` 指向 `ExportGlbCommand`
 - `ExportGlbCommand : IExternalCommand` 是导出入口，读取 UI 选项后调用导出服务
 

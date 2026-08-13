@@ -3,7 +3,7 @@
     <OutputName>RevitGltfExporter-$(ProductVersion)-x64</OutputName>
     <OutputType>Package</OutputType>
     <InstallerPlatform>x64</InstallerPlatform>
-    <DefineConstants>ProductVersion=$(ProductVersion);PayloadDir=$(PayloadDir)</DefineConstants>
+    <DefineConstants>ProductVersion=$(ProductVersion);PayloadDir=$(PayloadDir);RevitVersion=$(RevitVersion);ThirdPartyNoticesDir=$(MSBuildProjectDirectory)\..\..\THIRD_PARTY_NOTICES</DefineConstants>
     <DebugType>none</DebugType>
   </PropertyGroup>
 </Project>

@@ -1,8 +1,22 @@
 param(
-    [string]$Config = "Release"
+    [ValidateSet("Debug", "Release")]
+    [string]$Config = "Release",
+    [string]$DracoSourceDir
 )
 
 $ErrorActionPreference = "Stop"
+$resolvedDracoSourceDir = $null
+if ($DracoSourceDir) {
+    $dracoSourcePath = $DracoSourceDir
+    if (-not [System.IO.Path]::IsPathRooted($dracoSourcePath)) {
+        $dracoSourcePath = Join-Path (Get-Location) $dracoSourcePath
+    }
+    $resolvedDracoSourceDir = Resolve-Path -LiteralPath $dracoSourcePath
+    if (-not (Test-Path -LiteralPath (Join-Path $resolvedDracoSourceDir "CMakeLists.txt"))) {
+        throw "DracoSourceDir is not a Draco source tree: $resolvedDracoSourceDir"
+    }
+}
+
 Set-Location -Path $PSScriptRoot
 
 if (-not (Test-Path "build")) {
@@ -10,7 +24,15 @@ if (-not (Test-Path "build")) {
 }
 
 Write-Host "Configuring..."
-cmake -S . -B build -A x64
+$cmakeArguments = @("-S", ".", "-B", "build", "-A", "x64")
+if ($resolvedDracoSourceDir) {
+    $cmakeArguments += "-DDRACO_SOURCE_DIR=$resolvedDracoSourceDir"
+} else {
+    # Clear a cached local override so an ordinary build always uses the pinned archive.
+    $cmakeArguments += "-DDRACO_SOURCE_DIR="
+}
+
+cmake @cmakeArguments
 if ($LASTEXITCODE -ne 0) { throw "cmake configure failed" }
 
 Write-Host "Building ($Config)..."

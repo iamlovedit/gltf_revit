@@ -4,7 +4,7 @@
 
 - 文件必须为 glTF 2.0 Binary（`.glb`），一个 JSON chunk 加一个 BIN chunk，chunk 与 `buffers[0].byteLength` 按 4 字节对齐。
 - 根对象包含 `asset.version: "2.0"`、`scene: 0`、`scenes[0]`、`nodes`、`meshes`、`materials`、`accessors`、`bufferViews` 和 `buffers[0]`。
-- 根 `extras` 必须包含 `schemaVersion: "1.0.0"`、`source: "Revit"` 或 `"AutoCAD"`、`unit: "meter"`；AutoCAD 另写 `originalUnit`。
+- 根 `extras` 必须包含 `schemaVersion: "1.0.0"`、`source: "Revit"` 或 `"AutoCAD"`、`unit: "meter"`；AutoCAD 另写 `originalUnit`。Revit 导出器应写入 `sourceVersion`（例如 `"2024"`）用于诊断，Viewer 不得依赖该字段决定加载逻辑。
 - 坐标为右手系、Y-up、米；三角 primitive `mode: 4`，线 primitive `mode: 1`。
 
 ## 属性约定

@@ -5,7 +5,7 @@
 | 功能 | Spec |
 | --- | --- |
 | 总体业务与模块边界 | [overview.md](overview.md) |
-| Revit 2019 GLB 导出 | [revit-export.md](revit-export.md) |
+| Revit 多版本 GLB 导出 | [revit-export.md](revit-export.md) |
 | AutoCAD 2020–2024 GLB 导出 | [autocad-export.md](autocad-export.md) |
 | GLB 数据契约与坐标单位 | [glb-contract.md](glb-contract.md) |
 | Draco 原生压缩 | [draco.md](draco.md) |

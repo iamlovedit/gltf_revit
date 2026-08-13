@@ -5,7 +5,8 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Microsoft.Win32;
 using GltfExporter.Shared;
-using RevitGltfExporter.Export;
+using RevitGltfExporter.Adapters;
+using RevitGltfExporter.Core;
 using RevitGltfExporter.UI;
 
 namespace RevitGltfExporter.Commands
@@ -59,14 +60,19 @@ namespace RevitGltfExporter.Commands
 
             try
             {
-                var context = new GlbExportContext(doc, options);
+                var context = new RevitExportContext(doc, options);
                 var exporter = new CustomExporter(doc, context)
                 {
                     IncludeGeometricObjects = true,
                     ShouldStopOnError = false
                 };
                 exporter.Export(view);
-                context.WriteGlb(outputPath);
+                new RevitExportWriter().Write(
+                    context.Elements,
+                    context.Materials,
+                    options,
+                    RevitApiVersion.Current,
+                    outputPath);
 
                 TaskDialog.Show("Export GLB", "Exported to " + outputPath);
                 return Result.Succeeded;

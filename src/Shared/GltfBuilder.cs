@@ -216,6 +216,32 @@ namespace GltfExporter.Shared
             }
         }
 
+        public void WriteGlbAtomically(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new System.ArgumentException("Output path is required.", nameof(path));
+            var fullPath = Path.GetFullPath(path);
+            var directory = Path.GetDirectoryName(fullPath);
+            if (string.IsNullOrEmpty(directory)) throw new System.ArgumentException("Output path must include a directory.", nameof(path));
+            Directory.CreateDirectory(directory);
+            var tempPath = Path.Combine(directory, "." + Path.GetFileName(fullPath) + "." + System.Guid.NewGuid().ToString("N") + ".tmp");
+            try
+            {
+                WriteGlb(tempPath);
+                if (File.Exists(fullPath))
+                {
+                    File.Replace(tempPath, fullPath, null);
+                }
+                else
+                {
+                    File.Move(tempPath, fullPath);
+                }
+            }
+            finally
+            {
+                if (File.Exists(tempPath)) File.Delete(tempPath);
+            }
+        }
+
         private static byte[] FloatsToBytes(IList<float> src)
         {
             var arr = src as float[] ?? ToArray(src);

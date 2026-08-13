@@ -33,6 +33,7 @@
       <File Id="AutoCadSharedAssembly" Source="$(PayloadDir)\Contents\GltfExporter.Shared.dll" />
       <File Id="AutoCadNewtonsoftAssembly" Source="$(PayloadDir)\Contents\Newtonsoft.Json.dll" />
       <File Id="AutoCadDracoAssembly" Source="$(PayloadDir)\Contents\draco_encoder.dll" />
+      <File Id="AutoCadDracoLicense" Source="$(ThirdPartyNoticesDir)\Draco-LICENSE.txt" />
     </Component>
   </Package>
 </Wix>

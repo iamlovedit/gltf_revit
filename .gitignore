@@ -62,6 +62,7 @@ packages/
 *.snupkg
 
 # ---------- CMake / C++ (draco_encoder_wrapper) ----------
+/draco-1.5.7/
 src/draco_encoder_wrapper/build/
 CMakeCache.txt
 CMakeFiles/

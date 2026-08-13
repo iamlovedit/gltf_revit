@@ -5,7 +5,7 @@
 - `src/RevitGltfExporter/` contains the Revit 2019 x64 plug-in; export callbacks and collectors are under `Export/`.
 - `src/AutoCadGltfExporter/` contains the AutoCAD 2020–2024 plug-in, with bundle metadata under `Bundle/`.
 - `src/Shared/` holds the common .NET Framework 4.8 GLB schema, builders, options, and Draco interop used by both plug-ins.
-- `src/draco_encoder_wrapper/` builds the native `draco_encoder.dll`; `draco-1.5.7/` is the pinned Draco source tree.
+- `src/draco_encoder_wrapper/` builds the native `draco_encoder.dll`; CMake fetches the pinned Draco source archive, while `-DracoSourceDir` supports offline builds.
 - `src/web-viewer/` is the Vite + React + TypeScript + three.js viewer (`src/viewer/` contains viewer features). `docs/` contains implementation and performance notes; `scripts/` contains installation automation.
 
 ## Build, Test, and Development Commands
@@ -23,11 +23,11 @@ Build Draco before either plug-in; outputs are staged in `output/`. Use `pnpm de
 
 ## Coding Style & Naming Conventions
 
-Use four-space indentation in C# and TypeScript; retain existing braces and nullable-safe TypeScript. C# types/public members use `PascalCase`, locals/parameters `camelCase`, and interfaces the `I...` prefix. Name React components `PascalCase`, hooks `use...`, and keep feature files near their component. Use `.clang-format` for vendored Draco C++ (`draco-1.5.7/`). Keep generated files (`output/`, `dist/`, `bin/`, `obj/`, `node_modules/`) out of commits.
+Use four-space indentation in C# and TypeScript; retain existing braces and nullable-safe TypeScript. C# types/public members use `PascalCase`, locals/parameters `camelCase`, and interfaces the `I...` prefix. Name React components `PascalCase`, hooks `use...`, and keep feature files near their component. Keep generated files (`output/`, `dist/`, `bin/`, `obj/`, `node_modules/`) out of commits.
 
 ## Testing Guidelines
 
-There is no repository-level C# test project. Validate by building both solutions and running `pnpm typecheck`/`pnpm build`; exercise exports and GLB loading in the matching Autodesk host and browser. Draco’s upstream tests are under `draco-1.5.7/src` and disabled by the wrapper by default. Name new tests `ThingTest.cs` or `thing_test.cc`.
+There is no repository-level C# test project. Validate by building both solutions and running `pnpm typecheck`/`pnpm build`; exercise exports and GLB loading in the matching Autodesk host and browser. Draco’s upstream tests are disabled by the wrapper by default. Name new tests `ThingTest.cs` or `thing_test.cc`.
 
 ## Commit & Pull Request Guidelines
 
