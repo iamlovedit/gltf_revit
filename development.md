@@ -6,7 +6,7 @@
 
 | 子系统 | 目标 | 技术栈 |
 | --- | --- | --- |
-| `RevitGltfExporter` | Revit 2019 插件，将模型导出为含材质与构件属性的 `.glb`，支持 Draco 几何压缩 | C# / .NET Framework 4.7 / Revit 2019 API |
+| `RevitGltfExporter` | Revit 2019–2024 插件，将模型导出为含材质与构件属性的 `.glb`，支持 Draco 几何压缩 | C# / .NET Framework 4.8 / `RevitVersion` 对应 API |
 | `web-viewer` | 浏览器端 GLB 查看器，支持大模型异步、非阻塞加载 | Vite + React 18 + TypeScript + three.js + pnpm |
 
 两端通过 GLB 文件解耦；插件产物是 Viewer 的唯一输入。

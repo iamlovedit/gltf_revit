@@ -140,7 +140,7 @@ pnpm build
 
 ## 🚢 发布安装包
 
-推送 `v主版本.次版本.修订号` 格式的 tag（例如 `v1.2.3`）后，GitHub Actions 会构建 Draco、指定 Revit 版本插件和 AutoCAD 2020–2024 插件，并自动创建 GitHub Release。Release 包含两个 x64 MSI 安装包和 `SHA256SUMS.txt`；Web Viewer 不参与此发布流程。
+推送 `v主版本.次版本.修订号` 格式的 tag（例如 `v1.2.3`）后，GitHub Actions 会构建 Draco、Revit 2019–2024 插件和 AutoCAD 2020–2024 插件，并自动创建 GitHub Release。Release 包含六个 Revit x64 MSI、一个 AutoCAD x64 MSI 和 `SHA256SUMS.txt`；Web Viewer 不参与此发布流程。
 
 ```powershell
 git tag v1.2.3
@@ -152,6 +152,8 @@ git push origin v1.2.3
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\build-release.ps1 -Version v1.2.3
 ```
+
+该命令默认构建 Revit 2019–2024 六个 MSI 和一个 AutoCAD MSI。若只需发布指定 Revit 版本，可传入 `-RevitVersions 2024`；发布资产文件名包含 Revit 年份。
 
 ## 📦 安装插件
 

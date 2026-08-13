@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build-and-release:
     runs-on: windows-2022
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Check out tag
@@ -34,6 +34,7 @@ jobs:
         run: >-
           ./scripts/build-release.ps1
           -Version "${{ github.ref_name }}"
+          -RevitVersions 2019,2020,2021,2022,2023,2024
 
       - name: Create or update GitHub Release
         shell: pwsh
@@ -45,8 +46,8 @@ jobs:
             Where-Object { $_.Extension -eq ".msi" -or $_.Name -eq "SHA256SUMS.txt" } |
             ForEach-Object { $_.FullName }
 
-          if ($assets.Count -ne 3) {
-            throw "Expected two MSI files and SHA256SUMS.txt, found $($assets.Count) release assets."
+          if ($assets.Count -ne 8) {
+            throw "Expected six Revit MSI files, one AutoCAD MSI, and SHA256SUMS.txt, found $($assets.Count) release assets."
           }
 
           gh release view $env:RELEASE_TAG *> $null

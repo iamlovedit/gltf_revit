@@ -3,7 +3,7 @@
       Name="Revit GLB Exporter $(RevitVersion)"
       Manufacturer="gltf_revit"
       Version="$(ProductVersion)"
-      UpgradeCode="A73C6488-1EA0-49AE-9A5E-A0F12E04B68B"
+      UpgradeCode="$(RevitUpgradeCode)"
       Scope="perMachine"
       Language="1033">
     <MajorUpgrade DowngradeErrorMessage="A newer version of Revit GLB Exporter is already installed." />
@@ -26,11 +26,11 @@
       <ComponentRef Id="RevitPluginComponent" />
     </Feature>
 
-    <Component Id="RevitManifestComponent" Directory="RevitVersionFolder" Guid="AD3D19A5-DDA7-4A5C-8B23-95C4C5A87170" Bitness="always64">
+    <Component Id="RevitManifestComponent" Directory="RevitVersionFolder" Guid="$(RevitManifestComponentGuid)" Bitness="always64">
       <File Id="RevitManifestFile" Source="$(PayloadDir)\RevitGltfExporter.addin" KeyPath="yes" />
     </Component>
 
-    <Component Id="RevitPluginComponent" Directory="RevitPluginFolder" Guid="CB70E736-9D39-43C0-8EAA-C08484CFDD58" Bitness="always64">
+    <Component Id="RevitPluginComponent" Directory="RevitPluginFolder" Guid="$(RevitPluginComponentGuid)" Bitness="always64">
       <File Id="RevitPluginAssembly" Source="$(PayloadDir)\RevitGltfExporter.$(RevitVersion).dll" KeyPath="yes" />
       <File Id="RevitSharedAssembly" Source="$(PayloadDir)\GltfExporter.Shared.dll" />
       <File Id="RevitNewtonsoftAssembly" Source="$(PayloadDir)\Newtonsoft.Json.dll" />

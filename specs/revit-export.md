@@ -38,6 +38,7 @@
 - 每个版本的产物必须写入独立目录，例如 `output/Revit2019/`、`output/Revit2024/`，目录内包含该版本插件程序集、`.addin` 清单、`GltfExporter.Shared.dll`、`Newtonsoft.Json.dll` 和运行所需的 `draco_encoder.dll`。
 - `.addin` 清单必须安装到对应的 `%AppData%/Autodesk/Revit/Addins/<version>/` 目录，不得让不同版本共用清单或覆盖程序集。
 - 安装脚本应支持显式版本列表，并在未找到目标版本安装目录时跳过或失败并报告原因；不得静默安装到其他 Revit 版本。
+- Release 流水线默认必须构建 2019、2020、2021、2022、2023、2024 六个 Revit MSI，并与 AutoCAD MSI 一起上传；Revit MSI 文件名必须包含年份，SHA256 汇总必须覆盖全部 MSI。
 
 推荐的单版本构建形式为：
 
