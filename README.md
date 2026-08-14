@@ -107,6 +107,8 @@ msbuild .\src\RevitGltfExporter\RevitGltfExporter.slnx /m /p:Configuration=Relea
 
 ✅ 主要产物为 `output\Revit2019\RevitGltfExporter.2019.dll`。修改 `RevitVersion` 可构建其他受支持版本，并输出到对应的 `output\Revit<version>\` 目录。
 
+Visual Studio 解决方案还提供了版本专用配置。打开 Configuration Manager 后，可以直接选择 `Revit2019-Debug`、`Revit2022-Release` 或 `Revit2024-Debug` 等配置；配置名称中的年份会自动设置 `RevitVersion`，并选择对应的 API 包、条件编译符号和输出目录。`Debug`/`Release` 后缀仍分别控制调试符号和优化选项。编译前请关闭目标 Revit，避免已加载的插件 DLL 被锁定。
+
 ### 3️⃣ 编译 AutoCAD 插件
 
 在 Visual Studio 中打开 `src\AutoCadGltfExporter\AutoCadGltfExporter.slnx`，选择 `Release | x64` 后构建；也可以执行：

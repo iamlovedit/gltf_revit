@@ -1,11 +1,49 @@
 <Solution>
   <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <BuildType Name="Revit2019-Debug" />
+    <BuildType Name="Revit2019-Release" />
+    <BuildType Name="Revit2020-Debug" />
+    <BuildType Name="Revit2020-Release" />
+    <BuildType Name="Revit2021-Debug" />
+    <BuildType Name="Revit2021-Release" />
+    <BuildType Name="Revit2022-Debug" />
+    <BuildType Name="Revit2022-Release" />
+    <BuildType Name="Revit2023-Debug" />
+    <BuildType Name="Revit2023-Release" />
+    <BuildType Name="Revit2024-Debug" />
+    <BuildType Name="Revit2024-Release" />
     <Platform Name="x64" />
   </Configurations>
   <Project Path="../Shared/Shared.csproj" Id="a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7">
+    <BuildType Solution="Revit2019-Debug|*" Project="Debug" />
+    <BuildType Solution="Revit2019-Release|*" Project="Release" />
+    <BuildType Solution="Revit2020-Debug|*" Project="Debug" />
+    <BuildType Solution="Revit2020-Release|*" Project="Release" />
+    <BuildType Solution="Revit2021-Debug|*" Project="Debug" />
+    <BuildType Solution="Revit2021-Release|*" Project="Release" />
+    <BuildType Solution="Revit2022-Debug|*" Project="Debug" />
+    <BuildType Solution="Revit2022-Release|*" Project="Release" />
+    <BuildType Solution="Revit2023-Debug|*" Project="Debug" />
+    <BuildType Solution="Revit2023-Release|*" Project="Release" />
+    <BuildType Solution="Revit2024-Debug|*" Project="Debug" />
+    <BuildType Solution="Revit2024-Release|*" Project="Release" />
     <Platform Project="x64" />
   </Project>
   <Project Path="RevitGltfExporter/RevitGltfExporter.csproj" Id="8f0b1a8e-2d2d-4a2f-8b34-2c7d3f4a55aa">
+    <BuildType Solution="Revit2019-Debug|*" Project="Revit2019-Debug" />
+    <BuildType Solution="Revit2019-Release|*" Project="Revit2019-Release" />
+    <BuildType Solution="Revit2020-Debug|*" Project="Revit2020-Debug" />
+    <BuildType Solution="Revit2020-Release|*" Project="Revit2020-Release" />
+    <BuildType Solution="Revit2021-Debug|*" Project="Revit2021-Debug" />
+    <BuildType Solution="Revit2021-Release|*" Project="Revit2021-Release" />
+    <BuildType Solution="Revit2022-Debug|*" Project="Revit2022-Debug" />
+    <BuildType Solution="Revit2022-Release|*" Project="Revit2022-Release" />
+    <BuildType Solution="Revit2023-Debug|*" Project="Revit2023-Debug" />
+    <BuildType Solution="Revit2023-Release|*" Project="Revit2023-Release" />
+    <BuildType Solution="Revit2024-Debug|*" Project="Revit2024-Debug" />
+    <BuildType Solution="Revit2024-Release|*" Project="Revit2024-Release" />
     <Platform Project="x64" />
   </Project>
 </Solution>

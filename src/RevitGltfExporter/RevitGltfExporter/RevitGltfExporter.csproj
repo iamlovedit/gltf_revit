@@ -4,7 +4,25 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
-    <RevitVersion Condition=" '$(RevitVersion)' == '' ">2019</RevitVersion>
+    <Configurations Condition="'$(Configurations)' == ''">Debug;Release;Revit2019-Debug;Revit2019-Release;Revit2020-Debug;Revit2020-Release;Revit2021-Debug;Revit2021-Release;Revit2022-Debug;Revit2022-Release;Revit2023-Debug;Revit2023-Release;Revit2024-Debug;Revit2024-Release</Configurations>
+    <!--
+      Visual Studio exposes the version-specific configurations declared in
+      RevitGltfExporter.slnx. Keep RevitVersion as an MSBuild property so
+      command-line builds can still use /p:RevitVersion=2024.
+    -->
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2019-Debug'">2019</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2019-Release'">2019</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2020-Debug'">2020</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2020-Release'">2020</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2021-Debug'">2021</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2021-Release'">2021</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2022-Debug'">2022</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2022-Release'">2022</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2023-Debug'">2023</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2023-Release'">2023</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2024-Debug'">2024</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2024-Release'">2024</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == ''">2019</RevitVersion>
     <RevitInstallPath Condition=" '$(RevitInstallPath)' == '' ">C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallPath>
     <ProjectGuid>{8F0B1A8E-2D2D-4A2F-8B34-2C7D3F4A55AA}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -17,6 +35,19 @@
     <PlatformTarget>x64</PlatformTarget>
     <OutputPath>..\..\..\output\Revit$(RevitVersion)\</OutputPath>
     <UseLocalRevitReferences Condition="'$(UseLocalRevitReferences)' == ''">false</UseLocalRevitReferences>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2019-Debug'">Debug</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2019-Release'">Release</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2020-Debug'">Debug</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2020-Release'">Release</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2021-Debug'">Debug</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2021-Release'">Release</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2022-Debug'">Debug</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2022-Release'">Release</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2023-Debug'">Debug</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2023-Release'">Release</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2024-Debug'">Debug</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2024-Release'">Release</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == ''">$(Configuration)</BaseConfiguration>
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\Revit$(RevitVersion)\</IntermediateOutputPath>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -52,7 +83,7 @@
     <RevitApiPackageVersion>2024.2.0</RevitApiPackageVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+  <PropertyGroup Condition="'$(BaseConfiguration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -62,7 +93,7 @@
     <StartAction>Program</StartAction>
     <StartProgram>$(RevitInstallPath)\Revit.exe</StartProgram>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+  <PropertyGroup Condition="'$(BaseConfiguration)|$(Platform)' == 'Release|x64'">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;$(VersionDefine)</DefineConstants>

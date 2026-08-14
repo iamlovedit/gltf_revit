@@ -34,7 +34,7 @@
 
 ## 构建、输出与安装
 
-- 构建参数必须包含 `RevitVersion`；唯一的项目文件根据它设置条件编译符号、NuGet API 包版本、程序集名、输出目录和独立中间目录。仅在 `UseLocalRevitReferences=true` 时要求对应的 `RevitInstallPath`，不得修改项目默认安装路径来适配本机环境。
+- 构建参数必须包含 `RevitVersion`；唯一的项目文件根据它设置条件编译符号、NuGet API 包版本、程序集名、输出目录和独立中间目录。Visual Studio 解决方案提供 `Revit2019-Debug` 至 `Revit2024-Release` 的版本专用配置，这些配置必须映射到对应的 `RevitVersion`，并将 `Debug`/`Release` 后缀映射到基础构建配置；命令行仍可直接传入 `/p:RevitVersion`。仅在 `UseLocalRevitReferences=true` 时要求对应的 `RevitInstallPath`，不得修改项目默认安装路径来适配本机环境。
 - 每个版本的产物必须写入独立目录，例如 `output/Revit2019/`、`output/Revit2024/`，目录内包含该版本插件程序集、`.addin` 清单、`GltfExporter.Shared.dll`、`Newtonsoft.Json.dll` 和运行所需的 `draco_encoder.dll`。
 - `.addin` 清单必须安装到对应的 `%AppData%/Autodesk/Revit/Addins/<version>/` 目录，不得让不同版本共用清单或覆盖程序集。
 - 安装脚本应支持显式版本列表，并在未找到目标版本安装目录时跳过或失败并报告原因；不得静默安装到其他 Revit 版本。
