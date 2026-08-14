@@ -2,6 +2,7 @@
   <PropertyGroup>
     <RevitModernDotNet Condition="'$(RevitModernDotNet)' == ''">false</RevitModernDotNet>
     <OutputName>RevitGltfExporter-$(RevitVersion)-$(ProductVersion)-x64</OutputName>
+    <IntermediateOutputPath>obj\$(Configuration)\$(OutputName)\</IntermediateOutputPath>
     <OutputType>Package</OutputType>
     <InstallerPlatform>x64</InstallerPlatform>
     <DefineConstants>ProductVersion=$(ProductVersion);PayloadDir=$(PayloadDir);RevitVersion=$(RevitVersion);RevitModernDotNet=$(RevitModernDotNet);RevitUpgradeCode=$(RevitUpgradeCode);RevitManifestComponentGuid=$(RevitManifestComponentGuid);RevitPluginComponentGuid=$(RevitPluginComponentGuid);ThirdPartyNoticesDir=$(MSBuildProjectDirectory)\..\..\THIRD_PARTY_NOTICES</DefineConstants>
