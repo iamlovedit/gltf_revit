@@ -1,86 +1,100 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
-    <Configurations Condition="'$(Configurations)' == ''">Debug;Release;Revit2019-Debug;Revit2019-Release;Revit2020-Debug;Revit2020-Release;Revit2021-Debug;Revit2021-Release;Revit2022-Debug;Revit2022-Release;Revit2023-Debug;Revit2023-Release;Revit2024-Debug;Revit2024-Release</Configurations>
-    <!--
-      Visual Studio exposes the version-specific configurations declared in
-      RevitGltfExporter.slnx. Keep RevitVersion as an MSBuild property so
-      command-line builds can still use /p:RevitVersion=2024.
-    -->
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2019-Debug'">2019</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2019-Release'">2019</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2020-Debug'">2020</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2020-Release'">2020</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2021-Debug'">2021</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2021-Release'">2021</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2022-Debug'">2022</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2022-Release'">2022</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2023-Debug'">2023</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2023-Release'">2023</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2024-Debug'">2024</RevitVersion>
-    <RevitVersion Condition="'$(RevitVersion)' == '' and '$(Configuration)' == 'Revit2024-Release'">2024</RevitVersion>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <Platform Condition="'$(Platform)' == ''">x64</Platform>
+    <Configurations>Debug;Release;Revit2019-Debug;Revit2019-Release;Revit2020-Debug;Revit2020-Release;Revit2021-Debug;Revit2021-Release;Revit2022-Debug;Revit2022-Release;Revit2023-Debug;Revit2023-Release;Revit2024-Debug;Revit2024-Release;Revit2025-Debug;Revit2025-Release;Revit2026-Debug;Revit2026-Release;Revit2027-Debug;Revit2027-Release</Configurations>
+    <Platforms>x64</Platforms>
+
+    <!-- Visual Studio configurations map to the same command-line RevitVersion property. -->
+    <RevitVersion Condition="'$(RevitVersion)' == '' and ('$(Configuration)' == 'Revit2019-Debug' or '$(Configuration)' == 'Revit2019-Release')">2019</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and ('$(Configuration)' == 'Revit2020-Debug' or '$(Configuration)' == 'Revit2020-Release')">2020</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and ('$(Configuration)' == 'Revit2021-Debug' or '$(Configuration)' == 'Revit2021-Release')">2021</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and ('$(Configuration)' == 'Revit2022-Debug' or '$(Configuration)' == 'Revit2022-Release')">2022</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and ('$(Configuration)' == 'Revit2023-Debug' or '$(Configuration)' == 'Revit2023-Release')">2023</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and ('$(Configuration)' == 'Revit2024-Debug' or '$(Configuration)' == 'Revit2024-Release')">2024</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and ('$(Configuration)' == 'Revit2025-Debug' or '$(Configuration)' == 'Revit2025-Release')">2025</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and ('$(Configuration)' == 'Revit2026-Debug' or '$(Configuration)' == 'Revit2026-Release')">2026</RevitVersion>
+    <RevitVersion Condition="'$(RevitVersion)' == '' and ('$(Configuration)' == 'Revit2027-Debug' or '$(Configuration)' == 'Revit2027-Release')">2027</RevitVersion>
     <RevitVersion Condition="'$(RevitVersion)' == ''">2019</RevitVersion>
-    <RevitInstallPath Condition=" '$(RevitInstallPath)' == '' ">C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallPath>
-    <ProjectGuid>{8F0B1A8E-2D2D-4A2F-8B34-2C7D3F4A55AA}</ProjectGuid>
+
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and ('$(Configuration)' == 'Revit2019-Debug' or '$(Configuration)' == 'Revit2020-Debug' or '$(Configuration)' == 'Revit2021-Debug' or '$(Configuration)' == 'Revit2022-Debug' or '$(Configuration)' == 'Revit2023-Debug' or '$(Configuration)' == 'Revit2024-Debug' or '$(Configuration)' == 'Revit2025-Debug' or '$(Configuration)' == 'Revit2026-Debug' or '$(Configuration)' == 'Revit2027-Debug')">Debug</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and ('$(Configuration)' == 'Revit2019-Release' or '$(Configuration)' == 'Revit2020-Release' or '$(Configuration)' == 'Revit2021-Release' or '$(Configuration)' == 'Revit2022-Release' or '$(Configuration)' == 'Revit2023-Release' or '$(Configuration)' == 'Revit2024-Release' or '$(Configuration)' == 'Revit2025-Release' or '$(Configuration)' == 'Revit2026-Release' or '$(Configuration)' == 'Revit2027-Release')">Release</BaseConfiguration>
+    <BaseConfiguration Condition="'$(BaseConfiguration)' == ''">$(Configuration)</BaseConfiguration>
+
+    <RevitInstallPath Condition="'$(RevitInstallPath)' == ''">C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallPath>
+    <UseLocalRevitReferences Condition="'$(UseLocalRevitReferences)' == ''">false</UseLocalRevitReferences>
+    <DracoEncoderConfiguration Condition="'$(DracoEncoderConfiguration)' == ''">Release</DracoEncoderConfiguration>
+    <DracoEncoderDll>..\..\draco_encoder_wrapper\build\bin\$(DracoEncoderConfiguration)\draco_encoder.dll</DracoEncoderDll>
+
     <OutputType>Library</OutputType>
     <RootNamespace>RevitGltfExporter</RootNamespace>
     <AssemblyName>RevitGltfExporter.$(RevitVersion)</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <UseWPF>true</UseWPF>
+    <PlatformTarget>x64</PlatformTarget>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <UseWpf>true</UseWpf>
-    <PlatformTarget>x64</PlatformTarget>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <OutputPath>..\..\..\output\Revit$(RevitVersion)\</OutputPath>
-    <UseLocalRevitReferences Condition="'$(UseLocalRevitReferences)' == ''">false</UseLocalRevitReferences>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2019-Debug'">Debug</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2019-Release'">Release</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2020-Debug'">Debug</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2020-Release'">Release</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2021-Debug'">Debug</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2021-Release'">Release</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2022-Debug'">Debug</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2022-Release'">Release</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2023-Debug'">Debug</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2023-Release'">Release</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2024-Debug'">Debug</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == '' and '$(Configuration)' == 'Revit2024-Release'">Release</BaseConfiguration>
-    <BaseConfiguration Condition="'$(BaseConfiguration)' == ''">$(Configuration)</BaseConfiguration>
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\Revit$(RevitVersion)\</IntermediateOutputPath>
-    <TargetFrameworkProfile />
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(RevitVersion)' == '2019'">
+    <ExpectedTargetFramework>net48</ExpectedTargetFramework>
     <VersionDefine>REVIT2019</VersionDefine>
-    <ExpectedRevitApiVersion>19.0.0.0</ExpectedRevitApiVersion>
-    <RevitApiPackageVersion>2019.0.1</RevitApiPackageVersion>
+    <ExpectedRevitApiMajorVersion>19</ExpectedRevitApiMajorVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(RevitVersion)' == '2020'">
+    <ExpectedTargetFramework>net48</ExpectedTargetFramework>
     <VersionDefine>REVIT2020</VersionDefine>
-    <ExpectedRevitApiVersion>20.0.0.0</ExpectedRevitApiVersion>
-    <RevitApiPackageVersion>2020.0.1</RevitApiPackageVersion>
+    <ExpectedRevitApiMajorVersion>20</ExpectedRevitApiMajorVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(RevitVersion)' == '2021'">
+    <ExpectedTargetFramework>net48</ExpectedTargetFramework>
     <VersionDefine>REVIT2021;REVIT2021_OR_LATER</VersionDefine>
-    <ExpectedRevitApiVersion>21.0.0.0</ExpectedRevitApiVersion>
-    <RevitApiPackageVersion>2021.1.9</RevitApiPackageVersion>
+    <ExpectedRevitApiMajorVersion>21</ExpectedRevitApiMajorVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(RevitVersion)' == '2022'">
+    <ExpectedTargetFramework>net48</ExpectedTargetFramework>
     <VersionDefine>REVIT2022;REVIT2021_OR_LATER</VersionDefine>
-    <ExpectedRevitApiVersion>22.0.0.0</ExpectedRevitApiVersion>
-    <RevitApiPackageVersion>2022.1.0</RevitApiPackageVersion>
+    <ExpectedRevitApiMajorVersion>22</ExpectedRevitApiMajorVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(RevitVersion)' == '2023'">
+    <ExpectedTargetFramework>net48</ExpectedTargetFramework>
     <VersionDefine>REVIT2023;REVIT2021_OR_LATER</VersionDefine>
-    <ExpectedRevitApiVersion>23.0.0.0</ExpectedRevitApiVersion>
-    <RevitApiPackageVersion>2023.0.0</RevitApiPackageVersion>
+    <ExpectedRevitApiMajorVersion>23</ExpectedRevitApiMajorVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(RevitVersion)' == '2024'">
+    <ExpectedTargetFramework>net48</ExpectedTargetFramework>
     <VersionDefine>REVIT2024;REVIT2021_OR_LATER;REVIT2024_OR_GREATER</VersionDefine>
-    <ExpectedRevitApiVersion>24.0.0.0</ExpectedRevitApiVersion>
-    <RevitApiPackageVersion>2024.2.0</RevitApiPackageVersion>
+    <ExpectedRevitApiMajorVersion>24</ExpectedRevitApiMajorVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2025'">
+    <ExpectedTargetFramework>net8.0-windows</ExpectedTargetFramework>
+    <VersionDefine>REVIT2025;REVIT2021_OR_LATER;REVIT2024_OR_GREATER;REVIT2025_OR_GREATER;REVIT_NET8_OR_GREATER;REVIT_NET8</VersionDefine>
+    <ExpectedRevitApiMajorVersion>25</ExpectedRevitApiMajorVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2026'">
+    <ExpectedTargetFramework>net8.0-windows</ExpectedTargetFramework>
+    <VersionDefine>REVIT2026;REVIT2021_OR_LATER;REVIT2024_OR_GREATER;REVIT2025_OR_GREATER;REVIT_NET8_OR_GREATER;REVIT_NET8</VersionDefine>
+    <ExpectedRevitApiMajorVersion>26</ExpectedRevitApiMajorVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RevitVersion)' == '2027'">
+    <ExpectedTargetFramework>net10.0-windows</ExpectedTargetFramework>
+    <VersionDefine>REVIT2027;REVIT2021_OR_LATER;REVIT2024_OR_GREATER;REVIT2025_OR_GREATER;REVIT_NET8_OR_GREATER;REVIT_NET10</VersionDefine>
+    <ExpectedRevitApiMajorVersion>27</ExpectedRevitApiMajorVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Fallback keeps project evaluation diagnostic-friendly for unsupported values. -->
+    <TargetFramework Condition="'$(TargetFramework)' == '' and '$(ExpectedTargetFramework)' != ''">$(ExpectedTargetFramework)</TargetFramework>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net48</TargetFramework>
+    <ExpectedRevitApiPackageVersion Condition="'$(VersionDefine)' != ''">$(RevitVersion).0.0</ExpectedRevitApiPackageVersion>
+    <RevitApiPackageVersion Condition="'$(RevitApiPackageVersion)' == ''">$(ExpectedRevitApiPackageVersion)</RevitApiPackageVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(BaseConfiguration)|$(Platform)' == 'Debug|x64'">
@@ -88,7 +102,6 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <DefineConstants>DEBUG;TRACE;$(VersionDefine)</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <StartAction>Program</StartAction>
     <StartProgram>$(RevitInstallPath)\Revit.exe</StartProgram>
@@ -97,43 +110,41 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;$(VersionDefine)</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
 
   <Target Name="ValidateRevitInputs" BeforeTargets="PrepareForBuild">
-    <Error Condition="'$(RevitVersion)' != '2019' and '$(RevitVersion)' != '2020' and '$(RevitVersion)' != '2021' and '$(RevitVersion)' != '2022' and '$(RevitVersion)' != '2023' and '$(RevitVersion)' != '2024'" Text="Unsupported RevitVersion '$(RevitVersion)'. Supported versions are 2019 through 2024." />
+    <Error Condition="'$(RevitVersion)' != '2019' and '$(RevitVersion)' != '2020' and '$(RevitVersion)' != '2021' and '$(RevitVersion)' != '2022' and '$(RevitVersion)' != '2023' and '$(RevitVersion)' != '2024' and '$(RevitVersion)' != '2025' and '$(RevitVersion)' != '2026' and '$(RevitVersion)' != '2027'" Text="Unsupported RevitVersion '$(RevitVersion)'. Supported versions are 2019 through 2027." />
+    <Error Condition="'$(BaseConfiguration)' != 'Debug' and '$(BaseConfiguration)' != 'Release'" Text="Unsupported Configuration '$(Configuration)'. Use Debug, Release, or Revit&lt;year&gt;-Debug/Release." />
+    <Error Condition="'$(TargetFramework)' != '$(ExpectedTargetFramework)'" Text="Revit $(RevitVersion) must target $(ExpectedTargetFramework), but TargetFramework is '$(TargetFramework)'." />
+    <Error Condition="'$(UseLocalRevitReferences)' != 'true' and '$(RevitApiPackageVersion)' != '$(ExpectedRevitApiPackageVersion)'" Text="RevitVersion $(RevitVersion) requires Revit_All_Main_Versions_API_x64 $(ExpectedRevitApiPackageVersion), but RevitApiPackageVersion is '$(RevitApiPackageVersion)'." />
+    <Error Condition="!Exists('$(DracoEncoderDll)')" Text="draco_encoder.dll not found at '$(DracoEncoderDll)'. Build the native wrapper first." />
     <Error Condition="'$(UseLocalRevitReferences)' == 'true' and !Exists('$(RevitInstallPath)\RevitAPI.dll')" Text="Revit $(RevitVersion) API was not found at '$(RevitInstallPath)'. Set /p:RevitInstallPath to the matching installation directory, or use the default NuGet API package." />
     <Error Condition="'$(UseLocalRevitReferences)' == 'true' and !Exists('$(RevitInstallPath)\RevitAPIUI.dll')" Text="Revit $(RevitVersion) UI API was not found at '$(RevitInstallPath)'. Set /p:RevitInstallPath to the matching installation directory, or use the default NuGet API package." />
     <GetAssemblyIdentity AssemblyFiles="$(RevitInstallPath)\RevitAPI.dll" Condition="'$(UseLocalRevitReferences)' == 'true' and Exists('$(RevitInstallPath)\RevitAPI.dll')">
       <Output TaskParameter="Assemblies" ItemName="_RevitApiAssembly" />
     </GetAssemblyIdentity>
-    <Error Condition="'$(UseLocalRevitReferences)' == 'true' and '@(_RevitApiAssembly->'%(Version)')' != '$(ExpectedRevitApiVersion)'" Text="RevitVersion $(RevitVersion) requires RevitAPI $(ExpectedRevitApiVersion), but '$(RevitInstallPath)' contains version @(_RevitApiAssembly->'%(Version)')." />
+    <PropertyGroup Condition="'$(UseLocalRevitReferences)' == 'true' and '@(_RevitApiAssembly)' != ''">
+      <ActualRevitApiVersion>@(_RevitApiAssembly->'%(Version)')</ActualRevitApiVersion>
+      <ActualRevitApiMajorVersion>$([System.Version]::Parse('$(ActualRevitApiVersion)').Major)</ActualRevitApiMajorVersion>
+    </PropertyGroup>
+    <Error Condition="'$(UseLocalRevitReferences)' == 'true' and '$(ActualRevitApiMajorVersion)' != '$(ExpectedRevitApiMajorVersion)'" Text="RevitVersion $(RevitVersion) requires RevitAPI major version $(ExpectedRevitApiMajorVersion), but '$(RevitInstallPath)' contains version $(ActualRevitApiVersion)." />
   </Target>
 
   <ItemGroup Condition="'$(UseLocalRevitReferences)' == 'true'">
     <Reference Include="RevitAPI">
       <HintPath>$(RevitInstallPath)\RevitAPI.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
     <Reference Include="RevitAPIUI">
       <HintPath>$(RevitInstallPath)\RevitAPIUI.dll</HintPath>
-      <Private>False</Private>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition="'$(UseLocalRevitReferences)' != 'true'">
+  <ItemGroup Condition="'$(UseLocalRevitReferences)' != 'true' and '$(RevitApiPackageVersion)' != ''">
     <PackageReference Include="Revit_All_Main_Versions_API_x64" Version="$(RevitApiPackageVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xaml" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="WindowsBase" />
-  </ItemGroup>
+
   <ItemGroup>
     <Compile Include="Application.cs" />
     <Compile Include="Commands\ExportGlbCommand.cs" />
@@ -147,24 +158,25 @@
       <DependentUpon>ExportOptionsWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
     <Page Include="UI\ExportOptionsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <None Include="Resources\RevitGltfExporter.addin">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Update="Resources\RevitGltfExporter.addin">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Shared.csproj">
-      <Project>{A1B2C3D4-E5F6-4789-A0B1-C2D3E4F5A6B7}</Project>
-      <Name>Shared</Name>
+      <AdditionalProperties Condition="'$(Configuration)' == 'Debug' or '$(Configuration)' == 'Release'">RevitVersion=$(RevitVersion);TargetFramework=$(TargetFramework)</AdditionalProperties>
     </ProjectReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+  <Target Name="CopyDracoEncoderDll" AfterTargets="Build">
+    <Copy SourceFiles="$(DracoEncoderDll)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
   <Target Name="CopyRevitAddinManifest" AfterTargets="Build">
     <Copy SourceFiles="$(MSBuildProjectDirectory)\Resources\RevitGltfExporter.addin" DestinationFiles="$(TargetDir)RevitGltfExporter.addin" />
   </Target>

@@ -6,7 +6,7 @@
 
 ### 🏢 Revit GLB 导出器
 
-- 🧭 支持 Revit 2019，导出当前激活的三维视图。
+- 🧭 支持 Revit 2019–2027，导出当前激活的三维视图。
 - 🧱 导出模型几何、材质以及构件层级。
 - 🏷️ 可将构件类别、族、类型和参数写入 glTF `extras`。
 - 🗜️ 可选 Draco 几何压缩，并支持设置压缩等级。
@@ -54,7 +54,7 @@ AutoCAD 导出的模型会保留图层信息，可以在右侧图层面板中单
 
 | 目录 | 说明 |
 | --- | --- |
-| `src/RevitGltfExporter` | Revit 2019 导出插件 |
+| `src/RevitGltfExporter` | Revit 2019–2027 参数化导出插件 |
 | `src/AutoCadGltfExporter` | AutoCAD 2020–2024 导出插件 |
 | `src/Shared` | 两个导出器共用的 glTF/GLB 构建代码 |
 | `src/draco_encoder_wrapper` | Draco 原生编码 DLL |
@@ -65,10 +65,12 @@ AutoCAD 导出的模型会保留图层信息，可以在右侧图层面板中单
 ### 💻 环境要求
 
 - Windows 64 位
-- Visual Studio 2022 或 Build Tools（包含 MSBuild、.NET 桌面开发和 C++ 桌面开发工具）
+- Visual Studio 2022/2026 或 Build Tools（包含 MSBuild、.NET 桌面开发和 C++ 桌面开发工具；在 VS 内构建 Revit 2027 需要支持 .NET 10 的 Visual Studio 2026，也可使用 .NET 10 SDK 命令行构建）
 - .NET Framework 4.8 Developer Pack
+- .NET 8 SDK（构建 Revit 2025–2026 时需要）
+- .NET 10 SDK（构建 Revit 2027 时需要）
 - CMake
-- Revit 2019（编译 Revit 插件时需要）
+- 目标版本的 Revit（仅使用本机 API 引用、F5 调试或手工验证时需要）
 - AutoCAD 2020–2024 任一版本（编译 AutoCAD 插件时需要）
 - Node.js 和 pnpm 9（编译 Web 查看器时需要）
 
@@ -93,21 +95,21 @@ powershell -ExecutionPolicy Bypass -File .\src\draco_encoder_wrapper\build.ps1 -
 
 ### 2️⃣ 编译 Revit 插件
 
-在 Visual Studio 中打开 `src\RevitGltfExporter\RevitGltfExporter.slnx`，选择 `Release | x64` 后构建；也可以在 Developer PowerShell 中执行：
+Revit 插件只有一个 SDK-style `.csproj`。在 Visual Studio 中打开 `src\RevitGltfExporter\RevitGltfExporter.slnx`，选择目标年份配置（例如 `Revit2025-Release | x64`）后构建；也可以在 Developer PowerShell 中执行：
 
 ```powershell
-msbuild .\src\RevitGltfExporter\RevitGltfExporter.slnx /m /p:Configuration=Release /p:Platform=x64 /p:RevitVersion=2019
+msbuild .\src\RevitGltfExporter\RevitGltfExporter\RevitGltfExporter.csproj /restore /m /p:Configuration=Release /p:Platform=x64 /p:RevitVersion=2025
 ```
 
-默认通过 `Revit_All_Main_Versions_API_x64` NuGet 包引用目标版本的编译期 API。需要使用本机 Revit SDK 校验时，增加：
+默认通过 `Revit_All_Main_Versions_API_x64` NuGet 包引用目标版本的编译期 API，包版本固定为 `<RevitVersion>.0.0`（例如 Revit 2019 使用 `2019.0.0`）。需要使用本机 Revit SDK 校验时，增加：
 
 ```powershell
-/p:UseLocalRevitReferences=true /p:RevitInstallPath="D:\Autodesk\Revit 2019"
+/p:UseLocalRevitReferences=true /p:RevitInstallPath="D:\Autodesk\Revit 2025"
 ```
 
-✅ 主要产物为 `output\Revit2019\RevitGltfExporter.2019.dll`。修改 `RevitVersion` 可构建其他受支持版本，并输出到对应的 `output\Revit<version>\` 目录。
+✅ 主要产物为 `output\Revit2025\RevitGltfExporter.2025.dll`。2019–2024 配置自动使用 `net48`，2025–2026 使用 `net8.0-windows`，2027 使用 `net10.0-windows`；每个版本仍输出到独立的 `output\Revit<version>\` 目录。
 
-Visual Studio 解决方案还提供了版本专用配置。打开 Configuration Manager 后，可以直接选择 `Revit2019-Debug`、`Revit2022-Release` 或 `Revit2024-Debug` 等配置；配置名称中的年份会自动设置 `RevitVersion`，并选择对应的 API 包、条件编译符号和输出目录。`Debug`/`Release` 后缀仍分别控制调试符号和优化选项。编译前请关闭目标 Revit，避免已加载的插件 DLL 被锁定。
+Visual Studio 的 Configuration Manager 提供 `Revit2019-Debug` 至 `Revit2027-Release` 的版本专用配置。配置名称中的年份会自动设置 `RevitVersion`，并选择目标框架、API 包、条件编译符号、输出目录和对应的 `Revit.exe` 调试启动路径。`Debug`/`Release` 后缀仍分别控制调试符号和优化选项。编译或 F5 调试前请关闭目标 Revit，避免已加载的插件 DLL 被锁定。
 
 ### 3️⃣ 编译 AutoCAD 插件
 
@@ -142,7 +144,7 @@ pnpm build
 
 ## 🚢 发布安装包
 
-推送 `v主版本.次版本.修订号` 格式的 tag（例如 `v1.2.3`）后，GitHub Actions 会构建 Draco、Revit 2019–2024 插件和 AutoCAD 2020–2024 插件，并自动创建 GitHub Release。Release 包含六个 Revit x64 MSI、一个 AutoCAD x64 MSI 和 `SHA256SUMS.txt`；Web Viewer 不参与此发布流程。
+推送 `v主版本.次版本.修订号` 格式的 tag（例如 `v1.2.3`）后，GitHub Actions 会构建 Draco、Revit 2019–2027 插件和 AutoCAD 2020–2024 插件，并自动创建 GitHub Release。Release 包含九个 Revit x64 MSI、一个 AutoCAD x64 MSI 和 `SHA256SUMS.txt`；Web Viewer 不参与此发布流程。
 
 ```powershell
 git tag v1.2.3
@@ -155,7 +157,7 @@ git push origin v1.2.3
 powershell -ExecutionPolicy Bypass -File .\scripts\build-release.ps1 -Version v1.2.3
 ```
 
-该命令默认构建 Revit 2019–2024 六个 MSI 和一个 AutoCAD MSI。若只需发布指定 Revit 版本，可传入 `-RevitVersions 2024`；发布资产文件名包含 Revit 年份。
+该命令默认构建 Revit 2019–2027 九个 MSI 和一个 AutoCAD MSI。若只需发布指定 Revit 版本，可传入 `-RevitVersions 2025`；发布资产文件名包含 Revit 年份。
 
 ## 📦 安装插件
 
@@ -170,7 +172,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1
 🚀 该脚本会依次构建 Draco、Revit 插件和 AutoCAD 插件，并安装到 Revit 的 Addins 目录。也可以只安装其中一个：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Target Revit -RevitYears 2019,2024
+powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Target Revit -RevitYears 2019,2025,2027
 powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Target AutoCAD
 ```
 
@@ -178,9 +180,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-plugins.ps1 -Target A
 
 ### 🏢 手动安装 Revit 插件
 
-1. 构建目标版本，例如 `RevitVersion=2024`，生成 `output\Revit2024\RevitGltfExporter.2024.dll`。
-2. 将该目录中的 `.addin` 文件复制到 `%AppData%\Autodesk\Revit\Addins\2024\`。
-3. 确认对应目录中的 `RevitGltfExporter.2024.dll`、`GltfExporter.Shared.dll`、`Newtonsoft.Json.dll` 和 `draco_encoder.dll` 位于同一目录。
+1. 构建目标版本，例如 `RevitVersion=2025`，生成 `output\Revit2025\RevitGltfExporter.2025.dll`。
+2. 将该目录中的 `.addin` 文件复制到 `%AppData%\Autodesk\Revit\Addins\2025\`。
+3. 确认对应目录中的 `RevitGltfExporter.2025.dll`、`RevitGltfExporter.2025.deps.json`、`GltfExporter.Shared.dll`、`Newtonsoft.Json.dll` 和 `draco_encoder.dll` 位于同一目录。
 4. 重启 Revit。
 
 ### 📐 手动安装 AutoCAD 插件

@@ -2,8 +2,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Version,
 
-    [ValidateSet(2019, 2020, 2021, 2022, 2023, 2024)]
-    [int[]]$RevitVersions = @(2019, 2020, 2021, 2022, 2023, 2024),
+    [ValidateSet(2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027)]
+    [int[]]$RevitVersions = @(2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027),
 
     [string]$RevitInstallPath = "",
 
@@ -102,6 +102,9 @@ function Get-RevitProductIdentity {
         2022 = @{ UpgradeCode = "DA6097BB-41D3-4D6F-BE4C-8DB3F702C324"; ManifestGuid = "D06042C8-0C6D-4D8F-BE56-C8F709BA3425"; PluginGuid = "FEA3BA69-C072-46F3-B0DD-F3B7B7F3018B" }
         2023 = @{ UpgradeCode = "EB71A8CC-52E4-4E70-CF5D-9EC40813D435"; ManifestGuid = "E17153D9-1D7E-4E90-CF67-D9081ACB4536"; PluginGuid = "A0B4CB7A-D183-4704-C1EE-A4C8C804129C" }
         2024 = @{ UpgradeCode = "FC82B9DD-63F5-4F81-D06E-AFD51924E546"; ManifestGuid = "F28264EA-2E8F-4FA1-D079-EA192BCD5647"; PluginGuid = "B1C5DC8B-E294-4815-D2FF-B5D9D91523AD" }
+        2025 = @{ UpgradeCode = "6CE6D659-F691-4452-A2BC-CBC8978969CE"; ManifestGuid = "F3EF6DDA-0CB8-4B13-92E4-78ED07C6F1D7"; PluginGuid = "FFBCF6BD-9510-40EB-AE95-3C0BA8805489" }
+        2026 = @{ UpgradeCode = "F76AACE5-4BAA-4D0B-8E93-849C083500CC"; ManifestGuid = "05719CBF-993D-42D8-9CD7-101DB37CA3C7"; PluginGuid = "4C97DAA2-2FC3-4C99-8702-B4660C69AC95" }
+        2027 = @{ UpgradeCode = "21968904-78A8-4C74-99E1-8BFB69AFF1E2"; ManifestGuid = "45AA544C-CB1C-4351-8045-FD7108ACBEE4"; PluginGuid = "E41F58F3-A21A-4A70-8429-3130FD087E82" }
     }
 
     return $identities[$Year]
@@ -152,14 +155,21 @@ for ($index = 0; $index -lt $RevitVersions.Count; $index++) {
     $revitVersion = $RevitVersions[$index]
     $revitOutput = Join-Path $outputRoot ("Revit{0}" -f $revitVersion)
     $identity = Get-RevitProductIdentity -Year $revitVersion
-    $revitBuildArguments = @($commonBuildArguments + "/p:RevitVersion=$revitVersion")
+    $revitBuildArguments = @(
+        "build", $revitProject,
+        "-c", "Release", "--nologo",
+        "--no-incremental",
+        "-p:Platform=x64",
+        "-p:DracoEncoderConfiguration=Release",
+        "-p:RevitVersion=$revitVersion"
+    )
     if ($UseLocalRevitReferences) {
-        $revitBuildArguments += "/p:UseLocalRevitReferences=true"
-        $revitBuildArguments += "/p:RevitInstallPath=$(Resolve-RevitInstallPath -Index $index -Year $revitVersion)"
+        $revitBuildArguments += "-p:UseLocalRevitReferences=true"
+        $revitBuildArguments += "-p:RevitInstallPath=$(Resolve-RevitInstallPath -Index $index -Year $revitVersion)"
     }
 
     Write-Host "Building Revit $revitVersion plug-in..."
-    Invoke-Checked -FilePath $msbuild -Arguments (@($revitProject) + $revitBuildArguments) -FailureMessage "Revit $revitVersion plug-in build failed."
+    Invoke-Checked -FilePath $dotnet -Arguments $revitBuildArguments -FailureMessage "Revit $revitVersion plug-in build failed."
 
     $revitAddin = Join-Path $revitOutput "RevitGltfExporter.addin"
     Assert-FileExists $revitAddin
@@ -175,12 +185,17 @@ for ($index = 0; $index -lt $RevitVersions.Count; $index++) {
         (Join-Path $revitOutput "Newtonsoft.Json.dll"),
         (Join-Path $revitOutput "draco_encoder.dll")
     )) { Assert-FileExists $file }
+    if ($revitVersion -ge 2025) {
+        Assert-FileExists (Join-Path $revitOutput ("RevitGltfExporter.{0}.deps.json" -f $revitVersion))
+    }
 
+    $revitModernDotNet = if ($revitVersion -ge 2025) { "true" } else { "false" }
     $installerProperties = @(
         "-c", "Release", "--nologo",
         "-p:ProductVersion=$productVersion",
         "-p:OutputPath=$releaseRoot",
         "-p:RevitVersion=$revitVersion",
+        "-p:RevitModernDotNet=$revitModernDotNet",
         "-p:RevitUpgradeCode=$($identity.UpgradeCode)",
         "-p:RevitManifestComponentGuid=$($identity.ManifestGuid)",
         "-p:RevitPluginComponentGuid=$($identity.PluginGuid)"

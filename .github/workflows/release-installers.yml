@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build-and-release:
     runs-on: windows-2022
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Check out tag
@@ -27,14 +27,16 @@ jobs:
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Build plug-ins and MSI installers
         shell: pwsh
         run: >-
           ./scripts/build-release.ps1
           -Version "${{ github.ref_name }}"
-          -RevitVersions 2019,2020,2021,2022,2023,2024
+          -RevitVersions 2019,2020,2021,2022,2023,2024,2025,2026,2027
 
       - name: Create or update GitHub Release
         shell: pwsh
@@ -46,8 +48,8 @@ jobs:
             Where-Object { $_.Extension -eq ".msi" -or $_.Name -eq "SHA256SUMS.txt" } |
             ForEach-Object { $_.FullName }
 
-          if ($assets.Count -ne 8) {
-            throw "Expected six Revit MSI files, one AutoCAD MSI, and SHA256SUMS.txt, found $($assets.Count) release assets."
+          if ($assets.Count -ne 11) {
+            throw "Expected nine Revit MSI files, one AutoCAD MSI, and SHA256SUMS.txt, found $($assets.Count) release assets."
           }
 
           gh release view $env:RELEASE_TAG *> $null

@@ -66,7 +66,11 @@ namespace RevitGltfExporter.Commands
                     IncludeGeometricObjects = true,
                     ShouldStopOnError = false
                 };
+#if REVIT2019
                 exporter.Export(view);
+#else
+                exporter.Export((View)view);
+#endif
                 new RevitExportWriter().Write(
                     context.Elements,
                     context.Materials,

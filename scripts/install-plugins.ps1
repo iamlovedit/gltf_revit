@@ -213,6 +213,9 @@ function Install-RevitPlugin {
     Assert-FileExists (Join-Path $revitOutputDir "GltfExporter.Shared.dll")
     Assert-FileExists (Join-Path $revitOutputDir "Newtonsoft.Json.dll")
     Assert-FileExists (Join-Path $revitOutputDir "draco_encoder.dll")
+    if ($Year -ge 2025) {
+        Assert-FileExists (Join-Path $revitOutputDir ("RevitGltfExporter.{0}.deps.json" -f $Year))
+    }
     $addinTemplate = Join-Path $revitOutputDir "RevitGltfExporter.addin"
     Assert-FileExists $addinTemplate
 
@@ -312,7 +315,7 @@ try {
         }
         for ($index = 0; $index -lt $RevitYears.Count; $index++) {
             $year = $RevitYears[$index]
-            if ($year -lt 2019 -or $year -gt 2024) { throw "Supported Revit years are 2019 through 2024. Invalid value: $year" }
+            if ($year -lt 2019 -or $year -gt 2027) { throw "Supported Revit years are 2019 through 2027. Invalid value: $year" }
             Assert-FileExists $RevitProject
             $hostPath = Resolve-RevitInstallPath -Index $index -Year $year
             $properties = @{ RevitVersion = $year }

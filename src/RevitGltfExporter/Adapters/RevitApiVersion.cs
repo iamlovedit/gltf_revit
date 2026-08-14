@@ -8,7 +8,13 @@ namespace RevitGltfExporter.Adapters
         {
             get
             {
-#if REVIT2024_OR_GREATER
+#if REVIT2027
+                return "2027";
+#elif REVIT2026
+                return "2026";
+#elif REVIT2025
+                return "2025";
+#elif REVIT2024
                 return "2024";
 #elif REVIT2023
                 return "2023";

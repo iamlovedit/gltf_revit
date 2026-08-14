@@ -1,9 +1,10 @@
 <Project Sdk="WixToolset.Sdk/6.0.2">
   <PropertyGroup>
+    <RevitModernDotNet Condition="'$(RevitModernDotNet)' == ''">false</RevitModernDotNet>
     <OutputName>RevitGltfExporter-$(RevitVersion)-$(ProductVersion)-x64</OutputName>
     <OutputType>Package</OutputType>
     <InstallerPlatform>x64</InstallerPlatform>
-    <DefineConstants>ProductVersion=$(ProductVersion);PayloadDir=$(PayloadDir);RevitVersion=$(RevitVersion);RevitUpgradeCode=$(RevitUpgradeCode);RevitManifestComponentGuid=$(RevitManifestComponentGuid);RevitPluginComponentGuid=$(RevitPluginComponentGuid);ThirdPartyNoticesDir=$(MSBuildProjectDirectory)\..\..\THIRD_PARTY_NOTICES</DefineConstants>
+    <DefineConstants>ProductVersion=$(ProductVersion);PayloadDir=$(PayloadDir);RevitVersion=$(RevitVersion);RevitModernDotNet=$(RevitModernDotNet);RevitUpgradeCode=$(RevitUpgradeCode);RevitManifestComponentGuid=$(RevitManifestComponentGuid);RevitPluginComponentGuid=$(RevitPluginComponentGuid);ThirdPartyNoticesDir=$(MSBuildProjectDirectory)\..\..\THIRD_PARTY_NOTICES</DefineConstants>
     <DebugType>none</DebugType>
   </PropertyGroup>
 </Project>

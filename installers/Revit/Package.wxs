@@ -32,6 +32,9 @@
 
     <Component Id="RevitPluginComponent" Directory="RevitPluginFolder" Guid="$(RevitPluginComponentGuid)" Bitness="always64">
       <File Id="RevitPluginAssembly" Source="$(PayloadDir)\RevitGltfExporter.$(RevitVersion).dll" KeyPath="yes" />
+      <?if $(RevitModernDotNet) = true ?>
+      <File Id="RevitDependencyManifest" Source="$(PayloadDir)\RevitGltfExporter.$(RevitVersion).deps.json" />
+      <?endif ?>
       <File Id="RevitSharedAssembly" Source="$(PayloadDir)\GltfExporter.Shared.dll" />
       <File Id="RevitNewtonsoftAssembly" Source="$(PayloadDir)\Newtonsoft.Json.dll" />
       <File Id="RevitDracoAssembly" Source="$(PayloadDir)\draco_encoder.dll" />
