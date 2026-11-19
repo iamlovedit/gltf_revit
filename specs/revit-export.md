@@ -38,7 +38,8 @@
 
 - 构建参数必须包含 `RevitVersion`；唯一的 SDK-style 项目文件根据它设置目标框架、条件编译符号、NuGet API 包版本、程序集名、输出目录和独立中间目录。Visual Studio 解决方案提供 `Revit2019-Debug` 至 `Revit2027-Release` 的版本专用配置，这些配置必须映射到对应的 `RevitVersion`，并将 `Debug`/`Release` 后缀映射到基础构建配置；命令行仍可直接传入 `/p:RevitVersion`。仅在 `UseLocalRevitReferences=true` 时要求对应的 `RevitInstallPath`，不得修改项目默认安装路径来适配本机环境。
 - 每个版本的产物必须写入独立目录，例如 `output/Revit2019/`、`output/Revit2025/`、`output/Revit2027/`，目录内包含该版本插件程序集、`.addin` 清单、`GltfExporter.Shared.dll`、`Newtonsoft.Json.dll` 和运行所需的 `draco_encoder.dll`；2025+ 还必须部署对应的 `.deps.json`。
-- `.addin` 清单必须安装到对应的 `%AppData%/Autodesk/Revit/Addins/<version>/` 目录，不得让不同版本共用清单或覆盖程序集。
+- 当前用户安装脚本必须将 `.addin` 清单安装到对应的 `%AppData%/Autodesk/Revit/Addins/<version>/` 目录，不得让不同版本共用清单或覆盖程序集。
+- 全局 MSI 的 Revit 2019–2026 清单仍安装在 `%ProgramData%/Autodesk/Revit/Addins/<version>/`；Revit 2027 清单必须安装在 `%ProgramFiles%/Autodesk/Revit/Addins/2027/`（64 位 Program Files）。MSI 的插件程序集和依赖必须保留在清单相对路径指向的 `RevitGltfExporter` 子目录。
 - 安装脚本应支持显式版本列表，并在未找到目标版本安装目录时跳过或失败并报告原因；不得静默安装到其他 Revit 版本。
 - Release 流水线默认必须构建 2019–2027 九个 Revit MSI，并与 AutoCAD MSI 一起上传；Revit MSI 文件名必须包含年份，SHA256 汇总必须覆盖全部 MSI。
 
