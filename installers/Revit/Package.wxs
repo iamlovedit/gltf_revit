@@ -1,4 +1,10 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- Revit 2027 discovers machine-wide add-ins under 64-bit Program Files. -->
+  <?if $(RevitVersion) = 2027 ?>
+  <?define RevitAddinsRoot = "ProgramFiles64Folder" ?>
+  <?else?>
+  <?define RevitAddinsRoot = "CommonAppDataFolder" ?>
+  <?endif?>
   <Package
       Name="Revit GLB Exporter $(RevitVersion)"
       Manufacturer="gltf_revit"
@@ -9,7 +15,7 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of Revit GLB Exporter is already installed." />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
-    <StandardDirectory Id="CommonAppDataFolder">
+    <StandardDirectory Id="$(RevitAddinsRoot)">
       <Directory Id="RevitAutodeskFolder" Name="Autodesk">
         <Directory Id="RevitHostFolder" Name="Revit">
           <Directory Id="RevitAddinsFolder" Name="Addins">
